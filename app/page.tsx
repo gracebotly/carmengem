@@ -1,4 +1,6 @@
 import Section from "@/components/Section";
+import PortfolioGrid from "@/components/PortfolioGrid";
+import InvestmentList from "@/components/InvestmentList";
 
 export default function Home() {
   return (
@@ -30,12 +32,18 @@ export default function Home() {
         <p>Placeholder. Brand story, values, and approach land in Slice 2.</p>
       </Section>
 
-      <Section id="portfolio" eyebrow="The work" title="Portfolio" tone="dark">
-        <p>Placeholder. Photo grid and session environments land in Slice 3.</p>
+      <Section id="portfolio" eyebrow="The work" title="Portfolio" tone="dark" wide>
+        <p className="max-w-lg">
+          Placeholder. Real photography replaces these tiles in a later slice.
+        </p>
+        <PortfolioGrid />
       </Section>
 
-      <Section id="investment" eyebrow="Rates" title="Investment">
-        <p>Placeholder. Service tiers and pricing land in Slice 4.</p>
+      <Section id="investment" eyebrow="Rates" title="Investment" wide>
+        <p className="max-w-lg">
+          Placeholder pricing. Every session includes intake and aftercare.
+        </p>
+        <InvestmentList />
       </Section>
 
       <Section id="contact" eyebrow="Reach out" title="Contact">

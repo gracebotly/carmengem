@@ -8,6 +8,7 @@ type SectionProps = {
   eyebrow?: string;
   title: string;
   tone?: "light" | "dark";
+  wide?: boolean;
   children: ReactNode;
 };
 
@@ -16,6 +17,7 @@ export default function Section({
   eyebrow,
   title,
   tone = "light",
+  wide = false,
   children,
 }: SectionProps) {
   const dark = tone === "dark";
@@ -45,9 +47,9 @@ export default function Section({
           {title}
         </h2>
         <div
-          className={`mt-10 max-w-lg text-base font-light leading-[1.75] ${
-            dark ? "text-sand" : "text-stone"
-          }`}
+          className={`mt-10 text-base font-light leading-[1.75] ${
+            wide ? "" : "max-w-lg"
+          } ${dark ? "text-sand" : "text-stone"}`}
         >
           {children}
         </div>
