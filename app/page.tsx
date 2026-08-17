@@ -1,6 +1,7 @@
 import Section from "@/components/Section";
 import PortfolioGrid from "@/components/PortfolioGrid";
 import InvestmentList from "@/components/InvestmentList";
+import ContactForm from "@/components/ContactForm";
 
 export default function Home() {
   return (
@@ -47,7 +48,11 @@ export default function Home() {
       </Section>
 
       <Section id="contact" eyebrow="Reach out" title="Contact">
-        <p>Placeholder. Inquiry form, Supabase, and Resend land in Slice 5.</p>
+        <p className="max-w-lg">
+          Tell me what brings you in and what you are hoping for. I reply to
+          every inquiry personally.
+        </p>
+        <ContactForm />
       </Section>
     </main>
   );
