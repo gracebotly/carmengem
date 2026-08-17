@@ -1,69 +1,59 @@
-import Image from "next/image";
+import Section from "@/components/Section";
+import PortfolioGrid from "@/components/PortfolioGrid";
+import InvestmentList from "@/components/InvestmentList";
+import ContactForm from "@/components/ContactForm";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="flex-1">
+      {/* HERO */}
+      <section
+        id="hero"
+        className="section-anchor mx-auto flex min-h-[90vh] w-full max-w-6xl flex-col justify-center px-6"
+      >
+        <p className="eyebrow mb-5 text-sand">Bowie, Maryland</p>
+        <h1 className="font-display text-[42px] leading-[1.08] md:text-[68px]">
+          An hour that belongs
+          <br />
+          to your body.
+        </h1>
+        <p className="mt-7 max-w-lg text-base font-light leading-[1.75] text-stone">
+          Therapeutic massage by appointment. Placeholder copy — replace in a
+          later slice.
+        </p>
+        <a
+          href="#contact"
+          className="eyebrow mt-12 w-fit border-b border-rose pb-1.5 text-ink transition-colors hover:text-rose"
+        >
+          Start an inquiry
+        </a>
+      </section>
+
+      <Section id="about" eyebrow="Who I am" title="About">
+        <p>Placeholder. Brand story, values, and approach land in Slice 2.</p>
+      </Section>
+
+      <Section id="portfolio" eyebrow="The work" title="Portfolio" tone="dark" wide>
+        <p className="max-w-lg">
+          Placeholder. Real photography replaces these tiles in a later slice.
+        </p>
+        <PortfolioGrid />
+      </Section>
+
+      <Section id="investment" eyebrow="Rates" title="Investment" wide>
+        <p className="max-w-lg">
+          Placeholder pricing. Every session includes intake and aftercare.
+        </p>
+        <InvestmentList />
+      </Section>
+
+      <Section id="contact" eyebrow="Reach out" title="Contact">
+        <p className="max-w-lg">
+          Tell me what brings you in and what you are hoping for. I reply to
+          every inquiry personally.
+        </p>
+        <ContactForm />
+      </Section>
+    </main>
   );
 }
