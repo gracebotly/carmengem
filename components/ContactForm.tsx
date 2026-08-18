@@ -93,8 +93,8 @@ export default function ContactForm() {
           <select id="service" name="service" defaultValue="" className={FIELD}>
             <option value="">Not sure yet</option>
             {SERVICES.map((service) => (
-              <option key={service.id} value={service.name}>
-                {service.name}
+              <option key={service.id} value={service.duration}>
+                {service.duration}
               </option>
             ))}
           </select>
