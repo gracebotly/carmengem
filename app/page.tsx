@@ -41,9 +41,6 @@ export default function Home() {
       </Section>
 
       <Section id="investment" eyebrow="Rates" title="Investment" wide>
-        <p className="max-w-lg">
-          Placeholder pricing. Every session includes intake and aftercare.
-        </p>
         <InvestmentList />
       </Section>
 
