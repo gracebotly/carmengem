@@ -25,11 +25,11 @@ export async function POST(request: Request) {
   const name = str(body.name);
   const email = str(body.email);
   const phone = str(body.phone);
-  const message = str(body.message);
-  const duration = str(body.duration);
+  const note = str(body.note);
+  const length = str(body.length);
   const locationType = str(body.locationType);
   const city = str(body.city);
-  const preferredTime = str(body.preferredTime);
+  const when = str(body.when);
   const ageRaw = str(body.age);
   const age = Number.parseInt(ageRaw, 10);
 
@@ -37,31 +37,26 @@ export async function POST(request: Request) {
 
   if (name.length < 2) errors.name = "Enter your name.";
   if (!Number.isFinite(age) || age < 18 || age > 100) {
-    errors.age = "Enter your age. Clients must be 18 or older to book online.";
+    errors.age = "Enter your age. Booking is 18 and over.";
   }
-  if (email !== "" && !EMAIL_RE.test(email)) {
-    errors.email = "That email address does not look right.";
-  }
-  if (email === "" && phone.replace(/\D/g, "").length < 10) {
-    errors.phone = "Leave a phone number or an email so I can reply.";
-  }
-  if (duration === "") errors.duration = "Choose a session length.";
+  if (!EMAIL_RE.test(email)) errors.email = "Enter a valid email address.";
+  if (length === "") errors.length = "Choose a length.";
   if (locationType !== "incall" && locationType !== "outcall") {
-    errors.locationType = "Let me know where the session would be.";
+    errors.locationType = "Choose incall or outcall.";
   }
   if (locationType === "outcall" && city === "") {
     errors.city = "Which city should I come to?";
   }
-  if (message.length < 10) errors.message = "Tell me a little more.";
+  if (when === "") errors.when = "Let me know when.";
   if (
     name.length > 100 ||
     email.length > 200 ||
     phone.length > 40 ||
     city.length > 100 ||
-    preferredTime.length > 200 ||
-    message.length > 4000
+    when.length > 200 ||
+    note.length > 4000
   ) {
-    errors.message = "That is longer than I can accept.";
+    errors.note = "That is longer than I can accept.";
   }
 
   if (Object.keys(errors).length > 0) {
@@ -72,21 +67,21 @@ export async function POST(request: Request) {
     const supabase = getServiceClient();
     const { error } = await supabase.from("inquiries").insert({
       name,
-      email: email || null,
+      email,
       phone: phone || null,
       age,
-      service: duration,
+      service: length,
       location_type: locationType,
       city: city || null,
-      preferred_time: preferredTime || null,
-      message,
+      preferred_time: when,
+      message: note || "(no note)",
     });
 
     if (error) throw error;
   } catch {
     return Response.json(
       { error: "Could not save your inquiry. Try again." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -95,24 +90,22 @@ export async function POST(request: Request) {
     await resend.emails.send({
       from: "Carmen Gem <onboarding@resend.dev>",
       to: process.env.OWNER_EMAIL ?? "",
-      ...(email ? { replyTo: email } : {}),
-      subject: `New inquiry — ${name}, ${duration}`,
+      replyTo: email,
+      subject: `${name} — ${length}, ${locationType === "outcall" ? city : "incall"}, ${when}`,
       text: [
         `Name: ${name}`,
         `Age: ${age}`,
         `Phone: ${phone || "Not given"}`,
-        `Email: ${email || "Not given"}`,
-        `Session: ${duration}`,
-        locationType === "outcall"
-          ? `Location: Outcall to ${city}`
-          : "Location: Incall (client comes to you)",
-        `Preferred time: ${preferredTime || "Not given"}`,
+        `Email: ${email}`,
+        `Length: ${length}`,
+        locationType === "outcall" ? `Outcall — ${city}` : "Incall",
+        `When: ${when}`,
         "",
-        message,
+        note || "(no note)",
       ].join("\n"),
     });
   } catch {
-    // Inquiry is already stored. Do not fail the request on email error.
+    // Inquiry is stored. Do not fail the request on email error.
   }
 
   return Response.json({ ok: true });
