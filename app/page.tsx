@@ -46,8 +46,9 @@ export default function Home() {
 
       <Section id="contact" eyebrow="Reach out" title="Contact">
         <p className="max-w-lg">
-          Tell me what brings you in and what you are hoping for. I reply to
-          every inquiry personally.
+          Text is the fastest way to reach me. Fill this out and it writes the
+          message for you — everything I need to answer you in one reply instead
+          of five. Prefer email? The same details will send as an inquiry.
         </p>
         <ContactForm />
       </Section>
