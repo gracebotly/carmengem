@@ -6,22 +6,37 @@ import { SERVICES } from "@/lib/services";
 import {
   EMPTY_DRAFT,
   LOCATION_OPTIONS,
+  WHEN_OPTIONS,
   buildTextMessage,
   isDraftReady,
   smsHref,
+  whenPhrase,
   type InquiryDraft,
 } from "@/lib/inquiry";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
-const FIELD =
-  "w-full border-b border-line bg-transparent py-3 text-base font-light text-ink outline-none transition-colors placeholder:text-sand focus:border-rose";
-
 const OWNER_PHONE = process.env.NEXT_PUBLIC_OWNER_PHONE ?? "";
+
+/** Bubble fill: rose at ~7% flattened onto shell, so the tail never seams. */
+const BUBBLE = "#F1E8E4";
+
+const FIELD =
+  "w-full border-b border-line bg-transparent py-2.5 text-base font-light text-ink outline-none transition-colors placeholder:text-sand focus:border-rose";
+
+const CHIP_BASE =
+  "eyebrow border px-4 py-2.5 transition-colors focus-visible:outline-none";
+const CHIP_ON = "border-rose bg-rose/10 text-ink";
+const CHIP_OFF = "border-line text-stone hover:border-sand hover:text-ink";
+
+function chip(active: boolean) {
+  return `${CHIP_BASE} ${active ? CHIP_ON : CHIP_OFF}`;
+}
 
 export default function ContactForm() {
   const [draft, setDraft] = useState<InquiryDraft>(EMPTY_DRAFT);
   const [honeypot, setHoneypot] = useState("");
+  const [showEmail, setShowEmail] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState("");
@@ -42,9 +57,7 @@ export default function ContactForm() {
       setNotice("");
       window.setTimeout(() => setCopied(false), 2500);
     } catch {
-      setNotice(
-        "Copy did not work here — select the message above and copy it manually.",
-      );
+      setNotice("Copy did not work here — select the message and copy it by hand.");
     }
   }
 
@@ -58,7 +71,11 @@ export default function ContactForm() {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...draft, company: honeypot }),
+        body: JSON.stringify({
+          ...draft,
+          when: whenPhrase(draft),
+          company: honeypot,
+        }),
       });
       const result = await response.json();
 
@@ -78,249 +95,122 @@ export default function ContactForm() {
 
   if (status === "success") {
     return (
-      <p className="mt-16 max-w-lg text-base font-light leading-[1.75] text-stone">
-        Thank you. Your inquiry is in, and Carmen will reply within two business
-        days.
+      <p className="mt-12 max-w-lg text-base font-light leading-[1.75] text-stone">
+        Thank you. Your inquiry is in, and Carmen will reply within two business days.
       </p>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-16 max-w-lg" noValidate>
-      <input
-        type="text"
-        name="company"
-        value={honeypot}
-        onChange={(e) => setHoneypot(e.target.value)}
-        tabIndex={-1}
-        autoComplete="off"
-        aria-hidden="true"
-        className="pointer-events-none absolute h-0 w-0 opacity-0"
-      />
+    <form onSubmit={handleSubmit} className="mt-12 max-w-lg" noValidate>
+      <input type="text" name="company" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden="true" className="pointer-events-none absolute h-0 w-0 opacity-0" />
 
-      <div className="flex flex-col gap-10">
+      <div className="grid grid-cols-[1fr_5rem] gap-x-5">
         <div>
-          <label htmlFor="name" className="eyebrow text-sand">
-            Name
-          </label>
-          <input
-            id="name"
-            type="text"
-            autoComplete="name"
-            className={FIELD}
-            value={draft.name}
-            onChange={(e) => update("name", e.target.value)}
-          />
-          {errors.name && (
-            <p className="mt-2 text-sm text-rose">{errors.name}</p>
-          )}
+          <label htmlFor="name" className="eyebrow text-sand">Name</label>
+          <input id="name" type="text" autoComplete="given-name" className={FIELD} value={draft.name} onChange={(e) => update("name", e.target.value)} />
         </div>
-
         <div>
-          <label htmlFor="age" className="eyebrow text-sand">
-            Age
-          </label>
-          <input
-            id="age"
-            type="number"
-            inputMode="numeric"
-            min={18}
-            max={100}
-            className={FIELD}
-            value={draft.age}
-            onChange={(e) => update("age", e.target.value)}
-          />
-          {errors.age && <p className="mt-2 text-sm text-rose">{errors.age}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="phone" className="eyebrow text-sand">
-            Phone
-          </label>
-          <input
-            id="phone"
-            type="tel"
-            autoComplete="tel"
-            placeholder="Best number to text you back"
-            className={FIELD}
-            value={draft.phone}
-            onChange={(e) => update("phone", e.target.value)}
-          />
-          {errors.phone && (
-            <p className="mt-2 text-sm text-rose">{errors.phone}</p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="email" className="eyebrow text-sand">
-            Email (optional)
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="Only if you'd rather I reply by email"
-            className={FIELD}
-            value={draft.email}
-            onChange={(e) => update("email", e.target.value)}
-          />
-          {errors.email && (
-            <p className="mt-2 text-sm text-rose">{errors.email}</p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="duration" className="eyebrow text-sand">
-            Session length
-          </label>
-          <select
-            id="duration"
-            className={FIELD}
-            value={draft.duration}
-            onChange={(e) => update("duration", e.target.value)}
-          >
-            <option value="">Not sure yet</option>
-            {SERVICES.map((service) => (
-              <option key={service.id} value={service.duration}>
-                {service.duration}
-              </option>
-            ))}
-          </select>
-          {errors.duration && (
-            <p className="mt-2 text-sm text-rose">{errors.duration}</p>
-          )}
-        </div>
-
-        <fieldset>
-          <legend className="eyebrow text-sand">Where</legend>
-          <div className="mt-4 flex flex-col gap-3">
-            {LOCATION_OPTIONS.map((option) => (
-              <label
-                key={option.value}
-                className="flex cursor-pointer items-center gap-3 text-base font-light text-ink"
-              >
-                <input
-                  type="radio"
-                  name="locationType"
-                  value={option.value}
-                  checked={draft.locationType === option.value}
-                  onChange={(e) => update("locationType", e.target.value)}
-                  className="h-4 w-4 accent-rose"
-                />
-                {option.label}
-              </label>
-            ))}
-          </div>
-          {errors.locationType && (
-            <p className="mt-2 text-sm text-rose">{errors.locationType}</p>
-          )}
-        </fieldset>
-
-        {draft.locationType === "outcall" && (
-          <div>
-            <label htmlFor="city" className="eyebrow text-sand">
-              Your city
-            </label>
-            <input
-              id="city"
-              type="text"
-              placeholder="Bowie, Upper Marlboro, Annapolis…"
-              className={FIELD}
-              value={draft.city}
-              onChange={(e) => update("city", e.target.value)}
-            />
-            {errors.city && (
-              <p className="mt-2 text-sm text-rose">{errors.city}</p>
-            )}
-          </div>
-        )}
-
-        <div>
-          <label htmlFor="preferredTime" className="eyebrow text-sand">
-            Preferred day and time
-          </label>
-          <input
-            id="preferredTime"
-            type="text"
-            placeholder="Saturday afternoon, weekday evenings…"
-            className={FIELD}
-            value={draft.preferredTime}
-            onChange={(e) => update("preferredTime", e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="message" className="eyebrow text-sand">
-            A little about you
-          </label>
-          <textarea
-            id="message"
-            rows={4}
-            placeholder="What brings you in, anything I should know, what you're hoping for."
-            className={`${FIELD} resize-none`}
-            value={draft.message}
-            onChange={(e) => update("message", e.target.value)}
-          />
-          {errors.message && (
-            <p className="mt-2 text-sm text-rose">{errors.message}</p>
-          )}
+          <label htmlFor="age" className="eyebrow text-sand">Age</label>
+          <input id="age" type="number" inputMode="numeric" min={18} max={100} className={FIELD} value={draft.age} onChange={(e) => update("age", e.target.value)} />
         </div>
       </div>
+      {(errors.name || errors.age) && <p className="mt-2 text-sm text-rose">{errors.name ?? errors.age}</p>}
 
-      {/* TEXT PATH */}
-      <div className="mt-16 border-t border-line pt-10">
-        <p className="eyebrow text-sand">Text me — fastest</p>
-        <p className="mt-4 text-base font-light leading-[1.75] text-stone">
-          Your message writes itself as you fill this out. Copy it, or open it
-          straight in Messages.
-        </p>
-        <pre className="mt-6 whitespace-pre-wrap break-words border border-line bg-ink/[0.03] p-5 font-body text-sm font-light leading-[1.7] text-ink">
-          {ready
-            ? textMessage
-            : "Fill in your name, age, session length, and where — your message will appear here."}
-        </pre>
+      <fieldset className="mt-9">
+        <legend className="eyebrow text-sand">Length</legend>
+        <div className="mt-3 flex flex-wrap gap-2.5">
+          {SERVICES.map((service) => (
+            <button key={service.id} type="button" aria-pressed={draft.length === service.duration} onClick={() => update("length", service.duration)} className={chip(draft.length === service.duration)}>{service.duration}</button>
+          ))}
+        </div>
+        {errors.length && <p className="mt-2 text-sm text-rose">{errors.length}</p>}
+      </fieldset>
+
+      <fieldset className="mt-9">
+        <legend className="eyebrow text-sand">Where</legend>
+        <div className="mt-3 flex flex-wrap gap-2.5">
+          {LOCATION_OPTIONS.map((option) => (
+            <button key={option.value} type="button" aria-pressed={draft.locationType === option.value} onClick={() => update("locationType", option.value)} className={chip(draft.locationType === option.value)}>{option.label}</button>
+          ))}
+        </div>
+        <p className="mt-3 text-sm font-light text-sand">Incall — I come to you. Outcall — you come to me.</p>
+        {errors.locationType && <p className="mt-2 text-sm text-rose">{errors.locationType}</p>}
+      </fieldset>
+
+      {draft.locationType === "outcall" && (
+        <div className="mt-7">
+          <label htmlFor="city" className="eyebrow text-sand">Your city</label>
+          <input id="city" type="text" placeholder="Bowie, Upper Marlboro, Annapolis…" className={FIELD} value={draft.city} onChange={(e) => update("city", e.target.value)} />
+          {errors.city && <p className="mt-2 text-sm text-rose">{errors.city}</p>}
+        </div>
+      )}
+
+      <fieldset className="mt-9">
+        <legend className="eyebrow text-sand">When</legend>
+        <div className="mt-3 flex flex-wrap gap-2.5">
+          {WHEN_OPTIONS.map((option) => (
+            <button key={option.value} type="button" aria-pressed={draft.when === option.value} onClick={() => update("when", option.value)} className={chip(draft.when === option.value)}>{option.label}</button>
+          ))}
+        </div>
+        {errors.when && <p className="mt-2 text-sm text-rose">{errors.when}</p>}
+      </fieldset>
+
+      {draft.when === "specific" && (
+        <div className="mt-7">
+          <label htmlFor="whenDetail" className="eyebrow text-sand">What time</label>
+          <input id="whenDetail" type="text" placeholder="Saturday around 2pm" className={FIELD} value={draft.whenDetail} onChange={(e) => update("whenDetail", e.target.value)} />
+        </div>
+      )}
+
+      <div className="mt-9">
+        <label htmlFor="note" className="eyebrow text-sand">Anything I should know <span className="normal-case tracking-normal">(optional)</span></label>
+        <textarea id="note" rows={2} placeholder="What brings you in, any injuries, what you're hoping for." className={`${FIELD} resize-none`} value={draft.note} onChange={(e) => update("note", e.target.value)} />
+      </div>
+
+      <div className="mt-12">
+        <p className="eyebrow text-sand">Your message</p>
+        <div className="relative mt-4">
+          <div className="rounded-lg rounded-br-none px-6 py-5" style={{ backgroundColor: BUBBLE }}>
+            <pre className="whitespace-pre-wrap break-words font-body text-[15px] font-light leading-[1.7] text-ink">{ready ? textMessage : "Fill in the fields above and your message appears here, ready to copy."}</pre>
+          </div>
+          <span aria-hidden="true" className="absolute -bottom-2 right-0 h-4 w-4" style={{ backgroundColor: BUBBLE, clipPath: "polygon(0 0, 100% 0, 0 100%)" }} />
+        </div>
+
         <div className="mt-8 flex flex-wrap items-center gap-x-10 gap-y-4">
-          <button
-            type="button"
-            onClick={handleCopy}
-            disabled={!ready}
-            className="eyebrow flex items-center gap-2 border-b border-rose pb-1.5 text-ink transition-colors hover:text-rose disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {copied ? (
-              <Check size={13} strokeWidth={1.5} />
-            ) : (
-              <Copy size={13} strokeWidth={1.5} />
-            )}
+          <button type="button" onClick={handleCopy} disabled={!ready} className="eyebrow flex items-center gap-2 border-b border-rose pb-1.5 text-ink transition-colors hover:text-rose disabled:cursor-not-allowed disabled:opacity-40">
+            {copied ? <Check size={13} strokeWidth={1.5} /> : <Copy size={13} strokeWidth={1.5} />}
             {copied ? "Copied" : "Copy message"}
           </button>
           {OWNER_PHONE && (
-            <a
-              href={ready ? smsHref(OWNER_PHONE, textMessage) : undefined}
-              aria-disabled={!ready}
-              className={`eyebrow flex items-center gap-2 border-b border-line pb-1.5 transition-colors ${ready ? "text-stone hover:border-rose hover:text-rose" : "pointer-events-none text-sand opacity-40"}`}
-            >
-              <MessageSquare size={13} strokeWidth={1.5} />
-              Open in Messages
+            <a href={ready ? smsHref(OWNER_PHONE, textMessage) : undefined} aria-disabled={!ready} className={`eyebrow flex items-center gap-2 border-b border-line pb-1.5 transition-colors ${ready ? "text-stone hover:border-rose hover:text-rose" : "pointer-events-none text-sand opacity-40"}`}>
+              <MessageSquare size={13} strokeWidth={1.5} /> Open in Messages
             </a>
           )}
         </div>
       </div>
 
-      {/* EMAIL PATH */}
-      <div className="mt-14 border-t border-line pt-10">
-        <p className="eyebrow text-sand">Or send it as an inquiry</p>
-        <p className="mt-4 text-base font-light leading-[1.75] text-stone">
-          Same details, straight to my inbox. Leave a phone number or an email
-          so I can reach you.
-        </p>
-        {notice && <p className="mt-6 text-sm text-rose">{notice}</p>}
-        <button
-          type="submit"
-          disabled={status === "submitting"}
-          className="eyebrow mt-8 border-b border-rose pb-1.5 text-ink transition-colors hover:text-rose disabled:opacity-50"
-        >
-          {status === "submitting" ? "Sending" : "Send inquiry"}
-        </button>
+      <div className="mt-14 border-t border-line pt-8">
+        {!showEmail ? (
+          <button type="button" onClick={() => setShowEmail(true)} className="text-sm font-light text-sand underline underline-offset-4 transition-colors hover:text-rose">Rather email than text?</button>
+        ) : (
+          <div>
+            <p className="text-sm font-light leading-[1.7] text-stone">Same details, sent to my inbox instead. I reply within two business days.</p>
+            <div className="mt-7 grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2">
+              <div>
+                <label htmlFor="email" className="eyebrow text-sand">Email</label>
+                <input id="email" type="email" autoComplete="email" className={FIELD} value={draft.email} onChange={(e) => update("email", e.target.value)} />
+                {errors.email && <p className="mt-2 text-sm text-rose">{errors.email}</p>}
+              </div>
+              <div>
+                <label htmlFor="phone" className="eyebrow text-sand">Phone <span className="normal-case tracking-normal">(optional)</span></label>
+                <input id="phone" type="tel" autoComplete="tel" className={FIELD} value={draft.phone} onChange={(e) => update("phone", e.target.value)} />
+              </div>
+            </div>
+            {notice && <p className="mt-6 text-sm text-rose">{notice}</p>}
+            <button type="submit" disabled={status === "submitting"} className="eyebrow mt-8 border-b border-rose pb-1.5 text-ink transition-colors hover:text-rose disabled:opacity-50">{status === "submitting" ? "Sending" : "Send inquiry"}</button>
+          </div>
+        )}
       </div>
     </form>
   );

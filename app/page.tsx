@@ -45,10 +45,12 @@ export default function Home() {
       </Section>
 
       <Section id="contact" eyebrow="Reach out" title="Contact">
-        <p className="max-w-lg">
-          Text is the fastest way to reach me. Fill this out and it writes the
-          message for you — everything I need to answer you in one reply instead
-          of five. Prefer email? The same details will send as an inquiry.
+        <p className="font-display text-[26px] leading-[1.25] text-ink md:text-[32px]">
+          I prefer to be contacted by text.
+        </p>
+        <p className="mt-5 max-w-lg">
+          Tap through the fields below and your message writes itself. Copy it,
+          send it, and I can answer you in one reply.
         </p>
         <ContactForm />
       </Section>
