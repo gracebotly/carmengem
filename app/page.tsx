@@ -2,6 +2,7 @@ import Section from "@/components/Section";
 import PortfolioGrid from "@/components/PortfolioGrid";
 import InvestmentList from "@/components/InvestmentList";
 import ContactForm from "@/components/ContactForm";
+import AboutIntro from "@/components/AboutIntro";
 
 export default function Home() {
   return (
@@ -29,8 +30,8 @@ export default function Home() {
         </a>
       </section>
 
-      <Section id="about" eyebrow="Who I am" title="About">
-        <p>Placeholder. Brand story, values, and approach land in Slice 2.</p>
+      <Section id="about" eyebrow="Who I am" title="About" wide>
+        <AboutIntro />
       </Section>
 
       <Section id="portfolio" eyebrow="The work" title="Portfolio" tone="dark" wide>
