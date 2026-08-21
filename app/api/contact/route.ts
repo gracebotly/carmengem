@@ -26,34 +26,30 @@ export async function POST(request: Request) {
   const email = str(body.email);
   const phone = str(body.phone);
   const note = str(body.note);
+  const modality = str(body.modality);
   const length = str(body.length);
   const locationType = str(body.locationType);
-  const city = str(body.city);
-  const when = str(body.when);
-  const ageRaw = str(body.age);
-  const age = Number.parseInt(ageRaw, 10);
+  const zip = str(body.zip);
+  const preferredTime = str(body.preferredTime);
 
   const errors: Record<string, string> = {};
 
   if (name.length < 2) errors.name = "Enter your name.";
-  if (!Number.isFinite(age) || age < 18 || age > 100) {
-    errors.age = "Enter your age. Booking is 18 and over.";
-  }
   if (!EMAIL_RE.test(email)) errors.email = "Enter a valid email address.";
-  if (length === "") errors.length = "Choose a length.";
-  if (locationType !== "incall" && locationType !== "outcall") {
-    errors.locationType = "Choose incall or outcall.";
+  if (length === "") errors.length = "Choose a session length.";
+  if (locationType !== "studio" && locationType !== "client") {
+    errors.locationType = "Choose where your session begins.";
   }
-  if (locationType === "outcall" && city === "") {
-    errors.city = "Which city should I come to?";
+  if (locationType === "client" && !/^\d{5}$/.test(zip)) {
+    errors.zip = "Enter a 5-digit zip code.";
   }
-  if (when === "") errors.when = "Let me know when.";
+  if (preferredTime === "") errors.preferredTime = "Let me know when.";
   if (
     name.length > 100 ||
     email.length > 200 ||
     phone.length > 40 ||
-    city.length > 100 ||
-    when.length > 200 ||
+    modality.length > 100 ||
+    preferredTime.length > 200 ||
     note.length > 4000
   ) {
     errors.note = "That is longer than I can accept.";
@@ -69,11 +65,11 @@ export async function POST(request: Request) {
       name,
       email,
       phone: phone || null,
-      age,
-      service: length,
+      service: modality || length,
       location_type: locationType,
-      city: city || null,
-      preferred_time: when,
+      zip: locationType === "client" ? zip : null,
+      city: null,
+      preferred_time: preferredTime,
       message: note || "(no note)",
     });
 
@@ -91,15 +87,17 @@ export async function POST(request: Request) {
       from: "Carmen Gem <onboarding@resend.dev>",
       to: process.env.OWNER_EMAIL ?? "",
       replyTo: email,
-      subject: `${name} — ${length}, ${locationType === "outcall" ? city : "incall"}, ${when}`,
+      subject: `${name} — ${length}, ${
+        locationType === "client" ? zip : "studio"
+      }, ${preferredTime}`,
       text: [
         `Name: ${name}`,
-        `Age: ${age}`,
         `Phone: ${phone || "Not given"}`,
         `Email: ${email}`,
+        `Service: ${modality || "Not specified"}`,
         `Length: ${length}`,
-        locationType === "outcall" ? `Outcall — ${city}` : "Incall",
-        `When: ${when}`,
+        locationType === "client" ? `Their location — ${zip}` : "My studio",
+        `When: ${preferredTime}`,
         "",
         note || "(no note)",
       ].join("\n"),
