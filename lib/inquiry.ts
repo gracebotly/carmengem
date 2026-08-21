@@ -1,14 +1,18 @@
-export type LocationType = "incall" | "outcall";
-export type WhenChoice = "now" | "today" | "tomorrow" | "week" | "specific";
+export type LocationType = "studio" | "client";
+export type Timing = "asap" | "scheduled";
+export type Meridiem = "AM" | "PM";
 
 export type InquiryDraft = {
   name: string;
-  age: string;
+  modality: string;
   length: string;
   locationType: LocationType | "";
-  city: string;
-  when: WhenChoice | "";
-  whenDetail: string;
+  zip: string;
+  timing: Timing | "";
+  date: string;
+  hour: string;
+  minute: string;
+  meridiem: Meridiem | "";
   note: string;
   phone: string;
   email: string;
@@ -16,73 +20,66 @@ export type InquiryDraft = {
 
 export const EMPTY_DRAFT: InquiryDraft = {
   name: "",
-  age: "",
+  modality: "",
   length: "",
   locationType: "",
-  city: "",
-  when: "",
-  whenDetail: "",
+  zip: "",
+  timing: "",
+  date: "",
+  hour: "",
+  minute: "",
+  meridiem: "",
   note: "",
   phone: "",
   email: "",
 };
 
-export const LOCATION_OPTIONS: {
-  value: LocationType;
-  label: string;
-  hint: string;
-}[] = [
-  { value: "incall", label: "Incall", hint: "I come to you" },
-  { value: "outcall", label: "Outcall", hint: "You come to me" },
+export const LOCATION_OPTIONS: { value: LocationType; label: string }[] = [
+  { value: "studio", label: "My studio in Bowie" },
+  { value: "client", label: "Your location" },
 ];
 
-export const WHEN_OPTIONS: { value: WhenChoice; label: string; phrase: string }[] = [
-  { value: "now", label: "Now", phrase: "Now — as soon as you're free" },
-  { value: "today", label: "Today", phrase: "Today" },
-  { value: "tomorrow", label: "Tomorrow", phrase: "Tomorrow" },
-  { value: "week", label: "This week", phrase: "Sometime this week" },
-  { value: "specific", label: "Pick a time", phrase: "" },
-];
+export const HOURS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
-/** Human-readable form of the timing answer, used in the text and the email. */
-export function whenPhrase(draft: InquiryDraft): string {
-  if (draft.when === "specific") return draft.whenDetail.trim();
-  return WHEN_OPTIONS.find((o) => o.value === draft.when)?.phrase ?? "";
+export const MINUTES = ["00", "30"];
+
+export const MERIDIEMS: Meridiem[] = ["AM", "PM"];
+
+const ZIP_RE = /^\d{5}$/;
+
+/**
+ * Human-readable timing, stored in inquiries.preferred_time and used in the email subject.
+ */
+export function timingPhrase(draft: InquiryDraft): string {
+  if (draft.timing === "asap") return "As soon as you have an opening";
+  if (draft.timing !== "scheduled") return "";
+  if (!draft.date || !draft.hour || !draft.minute || !draft.meridiem) return "";
+
+  const [y, m, d] = draft.date.split("-").map(Number);
+  const when = new Date(y, m - 1, d);
+  const pretty = when.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  return `${pretty} at ${draft.hour}:${draft.minute} ${draft.meridiem}`;
 }
 
-/** Enough filled in to be worth sending. */
+export function isZipValid(zip: string): boolean {
+  return ZIP_RE.test(zip.trim());
+}
+
+/** Client-side gate for enabling the submit button. */
 export function isDraftReady(draft: InquiryDraft): boolean {
   if (draft.name.trim().length < 2) return false;
-  if (draft.age.trim() === "") return false;
   if (draft.length === "") return false;
   if (draft.locationType === "") return false;
-  if (draft.locationType === "outcall" && draft.city.trim() === "") return false;
-  if (draft.when === "") return false;
-  if (draft.when === "specific" && draft.whenDetail.trim() === "") return false;
+  if (draft.locationType === "client" && !isZipValid(draft.zip)) return false;
+  if (draft.timing === "") return false;
+  if (draft.timing === "scheduled") {
+    if (!draft.date || !draft.hour || !draft.minute || !draft.meridiem) return false;
+  }
+  if (draft.email.trim() === "") return false;
   return true;
-}
-
-/** The message the visitor copies. Short labelled lines — scannable on a phone. */
-export function buildTextMessage(draft: InquiryDraft): string {
-  const name = draft.name.trim() || "___";
-  const age = draft.age.trim();
-  const city = draft.city.trim() || "___";
-  const note = draft.note.trim();
-  const when = whenPhrase(draft);
-
-  const lines: string[] = [];
-
-  lines.push(`Hi Carmen, I'm ${name}${age ? `, ${age}` : ""}.`);
-  if (draft.length) lines.push(`Length: ${draft.length}`);
-  if (draft.locationType === "incall") lines.push("Incall — I'll come to you");
-  if (draft.locationType === "outcall") lines.push(`Outcall — ${city}`);
-  if (when) lines.push(`When: ${when}`);
-  if (note) lines.push("", note);
-
-  return lines.join("\n");
-}
-
-/** `?&body=` is the form that pre-fills on both iOS and Android. */
-export function smsHref(phone: string, body: string): string {
-  return `sms:${phone}?&body=${encodeURIComponent(body)}`;
 }

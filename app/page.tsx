@@ -47,11 +47,10 @@ export default function Home() {
 
       <Section id="contact" eyebrow="Reach out" title="Contact">
         <p className="font-display text-[26px] leading-[1.25] text-ink md:text-[32px]">
-          I prefer to be contacted by text.
+          Tell me what you need.
         </p>
         <p className="mt-5 max-w-lg">
-          Tap through the fields below and your message writes itself. Copy it,
-          send it, and I can answer you in one reply.
+          A few quick fields and I&rsquo;ll get back to you with times that work.
         </p>
         <ContactForm />
       </Section>
