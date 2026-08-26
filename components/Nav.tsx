@@ -34,7 +34,7 @@ export default function Nav() {
             dark ? "text-shell" : "text-ink"
           }`}
         >
-          Carmen Rose
+          Carmen Gem
         </a>
 
         <ul className="hidden gap-10 md:flex">
