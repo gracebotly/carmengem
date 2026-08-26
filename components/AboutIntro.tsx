@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function AboutIntro() {
   return (
     <div className="grid gap-12 md:grid-cols-[1.05fr_0.95fr] md:items-center md:gap-16">
@@ -23,9 +25,15 @@ export default function AboutIntro() {
         </p>
       </div>
 
-      {/* Portrait slot */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-line/20">
-        <div className="absolute inset-3 border border-line/60" />
+      {/* Portrait */}
+      <div className="relative aspect-[2/3] w-full overflow-hidden">
+        <Image
+          src="/images/high%207%20watermark.jpg"
+          alt="Carmen Gem"
+          fill
+          sizes="(max-width: 768px) 100vw, 45vw"
+          className="object-cover"
+        />
       </div>
     </div>
   );
