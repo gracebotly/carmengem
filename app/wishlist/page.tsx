@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Wishlist — Carmen Rose",
+  title: "Wishlist — Carmen Gem",
   robots: { index: false, follow: false },
 };
 

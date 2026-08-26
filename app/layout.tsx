@@ -17,7 +17,7 @@ const jost = Jost({
 });
 
 export const metadata: Metadata = {
-  title: "Carmen Rose — Therapeutic Massage in Bowie, Maryland",
+  title: "Carmen Gem — Therapeutic Massage in Bowie, Maryland",
   description:
     "Therapeutic massage by appointment in Bowie, Maryland. Serving Prince George's County.",
 };
