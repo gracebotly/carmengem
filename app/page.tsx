@@ -34,10 +34,7 @@ export default function Home() {
         <AboutIntro />
       </Section>
 
-      <Section id="portfolio" eyebrow="The work" title="Portfolio" tone="dark" wide>
-        <p className="max-w-lg">
-          Placeholder. Real photography replaces these tiles in a later slice.
-        </p>
+      <Section id="portfolio" title="Portfolio" tone="dark" wide>
         <PortfolioGrid />
       </Section>
 
