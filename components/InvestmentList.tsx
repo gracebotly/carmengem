@@ -1,19 +1,5 @@
+import Image from "next/image";
 import { SERVICES } from "@/lib/services";
-
-function PortraitPlaceholder() {
-  return (
-    <div
-      className="relative aspect-[4/5] overflow-hidden bg-line/45 md:order-2"
-      role="img"
-      aria-label="Portrait photograph coming soon"
-    >
-      <div className="absolute inset-5 border border-shell/75" />
-      <p className="eyebrow absolute inset-x-6 bottom-6 text-center text-stone">
-        Portrait coming soon
-      </p>
-    </div>
-  );
-}
 
 export default function InvestmentList() {
   return (
@@ -57,7 +43,15 @@ export default function InvestmentList() {
           </p>
         </div>
       </div>
-      <PortraitPlaceholder />
+      <div className="relative aspect-[2/3] overflow-hidden md:order-2">
+        <Image
+          src="/images/high%204%20watermark.jpg"
+          alt="Carmen Gem"
+          fill
+          sizes="(max-width: 768px) 100vw, 45vw"
+          className="object-cover"
+        />
+      </div>
     </div>
   );
 }

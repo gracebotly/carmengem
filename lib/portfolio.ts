@@ -1,34 +1,29 @@
 import fs from "node:fs";
 import path from "node:path";
 
+export type Shape = "wide" | "tall" | "square";
+
 export type PortfolioItem = {
   src: string;
+  shape: Shape;
   alt: string;
-  width: number;
-  height: number;
 };
 
 const DIR = path.join(process.cwd(), "public", "portfolio");
-const IMAGE = /\.(jpe?g|png|webp|avif)$/i;
 
-// The two crops in use. Dimensions prevent layout shift; the browser still
-// renders each file at its own true ratio, so a future photo that is slightly
-// off these numbers is harmless.
-const LANDSCAPE = { width: 2000, height: 1125 };
-const PORTRAIT = { width: 1333, height: 2000 };
+/** NN-shape-optional-description.ext */
+const FILENAME =
+  /^(\d+)-(wide|tall|square)(?:-([a-z0-9-]+))?\.(jpe?g|png|webp|avif)$/i;
 
-/** First run of digits in the filename, for numeric ordering. */
-function orderOf(file: string): number {
-  const match = file.match(/\d+/);
-  return match ? Number(match[0]) : Number.MAX_SAFE_INTEGER;
+function toAlt(slug: string | undefined): string {
+  if (!slug) return "Carmen Gem";
+  const words = slug.replace(/-/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 /**
  * Reads public/portfolio at build time. Adding a photo is a file drop,
- * never a code edit. Non-image files are ignored.
- *
- * Orientation is read from the filename: any file with "landscape" in the
- * name is treated as 16:9, everything else as 2:3.
+ * never a code edit. Anything that does not match FILENAME is ignored.
  */
 export function getPortfolio(): PortfolioItem[] {
   let files: string[];
@@ -40,15 +35,19 @@ export function getPortfolio(): PortfolioItem[] {
   }
 
   return files
-    .filter((file) => IMAGE.test(file))
-    .sort((a, b) => orderOf(a) - orderOf(b) || a.localeCompare(b))
     .map((file) => {
-      const size = /landscape/i.test(file) ? LANDSCAPE : PORTRAIT;
+      const match = FILENAME.exec(file);
+      if (!match) return null;
+
+      const [, order, shape, slug] = match;
       return {
-        // Filenames contain spaces — encode or the request 404s.
-        src: `/portfolio/${encodeURIComponent(file)}`,
-        alt: "Carmen Gem",
-        ...size,
+        order: Number(order),
+        src: `/portfolio/${file}`,
+        shape: shape.toLowerCase() as Shape,
+        alt: toAlt(slug),
       };
-    });
+    })
+    .filter((item) => item !== null)
+    .sort((a, b) => a.order - b.order)
+    .map(({ src, shape, alt }) => ({ src, shape, alt }));
 }
