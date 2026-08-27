@@ -14,12 +14,8 @@ export default function Footer() {
           <p className="font-body text-lg tracking-[0.08em] text-ink">
             {BUSINESS.name}
           </p>
-          <p className="eyebrow mt-3 text-sand">
-            {BUSINESS.city}, Maryland &nbsp;·&nbsp; By appointment
-          </p>
-
           {(BUSINESS.phone || BUSINESS.email) && (
-            <div className="mt-5 flex flex-col gap-2 text-base font-light text-stone">
+            <div className="mt-4 flex flex-col gap-2 text-base font-light text-stone">
               {BUSINESS.phone && (
                 <a
                   href={telHref(BUSINESS.phone)}
@@ -38,10 +34,6 @@ export default function Footer() {
               )}
             </div>
           )}
-
-          <p className="mt-5 max-w-sm text-sm font-light leading-[1.7] text-sand">
-            Serving {BUSINESS.areaServed.join(" · ")}
-          </p>
         </div>
 
         <div className="flex flex-col gap-3 sm:items-end">

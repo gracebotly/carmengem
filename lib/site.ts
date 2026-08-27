@@ -37,8 +37,7 @@ export const BUSINESS = {
 
   // TODO(Grace): the number clients should call or text. Format "+1-301-555-0142".
   phone: "",
-  // TODO(Grace): public contact address, e.g. "hello@carmengem.com".
-  email: "",
+  email: "carmengem@protonmail.com",
 
   // Street address is intentionally blank — this is a home studio. Locality,
   // region and zip are enough for local relevance without publishing where you live.
