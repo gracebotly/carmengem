@@ -20,6 +20,7 @@ import {
   saveLead,
   suggestEmail,
 } from "@/lib/leadCapture";
+import { formatCityState, parseCityState } from "@/lib/usStates";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -175,14 +176,14 @@ export default function ContactForm() {
 
   if (status === "success") {
     return (
-      <p className="mt-12 max-w-lg text-base font-light leading-[1.75] text-stone">
+      <p className="max-w-lg text-base font-light leading-[1.75] text-stone">
         Thank you. Your inquiry is in — I&rsquo;ll text you back shortly to confirm a time.
       </p>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-12 max-w-lg" noValidate>
+    <form onSubmit={handleSubmit} className="max-w-lg" noValidate>
       <input
         type="text"
         name="company"
@@ -263,18 +264,30 @@ export default function ContactForm() {
 
         {draft.locationType === "client" && (
           <div>
-            <label htmlFor="zip" className="eyebrow text-sand">Zip code</label>
+            <label htmlFor="cityState" className="eyebrow text-sand">
+              City and state
+            </label>
             <input
-              id="zip"
+              id="cityState"
               type="text"
-              inputMode="numeric"
-              maxLength={5}
-              placeholder="20774"
-              className={`${FIELD} max-w-[9rem]`}
-              value={draft.zip}
-              onChange={(e) => update("zip", e.target.value.replace(/\D/g, ""))}
+              autoComplete="address-level2"
+              maxLength={80}
+              placeholder="Bowie, MD"
+              className={FIELD}
+              value={draft.cityState}
+              onChange={(e) => update("cityState", e.target.value)}
+              onBlur={(e) => {
+                const parsed = parseCityState(e.target.value);
+                if (parsed) update("cityState", formatCityState(parsed));
+              }}
             />
-            {errors.zip && <p className="mt-2 text-sm text-rose">{errors.zip}</p>}
+            <p className="mt-2 text-sm font-light text-sand">
+              So I know how far I&rsquo;m travelling. I&rsquo;ll confirm the exact
+              address by text.
+            </p>
+            {errors.cityState && (
+              <p className="mt-2 text-sm text-rose">{errors.cityState}</p>
+            )}
           </div>
         )}
 
