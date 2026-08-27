@@ -2,7 +2,6 @@ import { isEmailValid } from "@/lib/leadCapture";
 
 export type LocationType = "studio" | "client";
 export type Timing = "asap" | "scheduled";
-export type Meridiem = "AM" | "PM";
 
 export type InquiryDraft = {
   firstName: string;
@@ -12,9 +11,8 @@ export type InquiryDraft = {
   zip: string;
   timing: Timing | "";
   date: string;
-  hour: string;
-  minute: string;
-  meridiem: Meridiem | "";
+  /** Display value from TIME_SLOTS, e.g. "3:30 PM". */
+  time: string;
   note: string;
   phone: string;
   email: string;
@@ -28,9 +26,7 @@ export const EMPTY_DRAFT: InquiryDraft = {
   zip: "",
   timing: "",
   date: "",
-  hour: "",
-  minute: "",
-  meridiem: "",
+  time: "",
   note: "",
   phone: "",
   email: "",
@@ -64,11 +60,29 @@ export const LOCATION_OPTIONS: { value: LocationType; label: string }[] = [
   { value: "client", label: "Your location" },
 ];
 
-export const HOURS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+export const TIMING_OPTIONS: { value: Timing; label: string }[] = [
+  { value: "asap", label: "As soon as you have an opening" },
+  { value: "scheduled", label: "Pick a date and time" },
+];
 
-export const MINUTES = ["00", "30"];
+/** 8:00 AM through 8:30 PM, every 30 minutes. Adjust the bounds here only. */
+function buildTimeSlots(): string[] {
+  const START_MINUTES = 8 * 60;
+  const END_MINUTES = 20 * 60 + 30;
+  const slots: string[] = [];
 
-export const MERIDIEMS: Meridiem[] = ["AM", "PM"];
+  for (let total = START_MINUTES; total <= END_MINUTES; total += 30) {
+    const hour24 = Math.floor(total / 60);
+    const minute = total % 60;
+    const meridiem = hour24 < 12 ? "AM" : "PM";
+    const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+    slots.push(`${hour12}:${String(minute).padStart(2, "0")} ${meridiem}`);
+  }
+
+  return slots;
+}
+
+export const TIME_SLOTS: string[] = buildTimeSlots();
 
 const ZIP_RE = /^\d{5}$/;
 
@@ -78,7 +92,7 @@ const ZIP_RE = /^\d{5}$/;
 export function timingPhrase(draft: InquiryDraft): string {
   if (draft.timing === "asap") return "As soon as you have an opening";
   if (draft.timing !== "scheduled") return "";
-  if (!draft.date || !draft.hour || !draft.minute || !draft.meridiem) return "";
+  if (!draft.date || !draft.time) return "";
 
   const [y, m, d] = draft.date.split("-").map(Number);
   const when = new Date(y, m - 1, d);
@@ -88,7 +102,7 @@ export function timingPhrase(draft: InquiryDraft): string {
     day: "numeric",
   });
 
-  return `${pretty} at ${draft.hour}:${draft.minute} ${draft.meridiem}`;
+  return `${pretty} at ${draft.time}`;
 }
 
 export function isZipValid(zip: string): boolean {
@@ -104,7 +118,7 @@ export function isDraftReady(draft: InquiryDraft): boolean {
   if (draft.locationType === "client" && !isZipValid(draft.zip)) return false;
   if (draft.timing === "") return false;
   if (draft.timing === "scheduled") {
-    if (!draft.date || !draft.hour || !draft.minute || !draft.meridiem) return false;
+    if (!draft.date || !draft.time) return false;
   }
   if (!isEmailValid(draft.email)) return false;
   return true;
