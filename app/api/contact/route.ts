@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { DURATION_VALUES } from "@/lib/inquiry";
 import { isPhoneValid } from "@/lib/leadCapture";
 import { getServiceClient } from "@/lib/supabase";
+import { formatCityState, parseCityState, type CityState } from "@/lib/usStates";
 
 export const runtime = "nodejs";
 
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
   const note = str(body.note);
   const length = str(body.length);
   const locationType = str(body.locationType);
-  const zip = str(body.zip);
+  const cityState = str(body.cityState);
   const preferredTime = str(body.preferredTime);
 
   const errors: Record<string, string> = {};
@@ -54,8 +55,12 @@ export async function POST(request: Request) {
   if (locationType !== "studio" && locationType !== "client") {
     errors.locationType = "Choose where your session begins.";
   }
-  if (locationType === "client" && !/^\d{5}$/.test(zip)) {
-    errors.zip = "Enter a 5-digit zip code.";
+  let location: CityState | null = null;
+  if (locationType === "client") {
+    location = parseCityState(cityState);
+    if (!location) {
+      errors.cityState = "Enter the city and state you're in, e.g. Bowie, MD.";
+    }
   }
   if (preferredTime === "") errors.preferredTime = "Let me know when.";
   if (
@@ -72,6 +77,9 @@ export async function POST(request: Request) {
   if (Object.keys(errors).length > 0) {
     return Response.json({ errors }, { status: 400 });
   }
+
+  // Non-null past validation whenever locationType === "client".
+  const locationLabel = location ? formatCityState(location) : "studio";
 
   // Warn-only. A domain with no mail server is recorded, never rejected.
   let emailStatus: "ok" | "no_mx" = "ok";
@@ -91,8 +99,10 @@ export async function POST(request: Request) {
     phone: phone || null,
     service: length,
     location_type: locationType,
-    zip: locationType === "client" ? zip : null,
-    city: null,
+    // `zip` is retained in the table but no longer collected. Written null so a
+    // promoted partial row can never carry a stale value.
+    zip: null,
+    city: location ? locationLabel : null,
     preferred_time: preferredTime,
     message: note || "(no note)",
     status: "complete",
@@ -134,9 +144,7 @@ export async function POST(request: Request) {
       from: "Carmen Gem <onboarding@resend.dev>",
       to: process.env.OWNER_EMAIL ?? "",
       replyTo: email,
-      subject: `${name} — ${length}, ${
-        locationType === "client" ? zip : "studio"
-      }, ${preferredTime}`,
+      subject: `${name} — ${length}, ${locationLabel}, ${preferredTime}`,
       text: [
         `Name: ${firstName} ${lastName}`,
         `Phone: ${phone || "Not given"}`,
@@ -145,7 +153,9 @@ export async function POST(request: Request) {
           ? ["** This email domain has no mail server. A reply may bounce. **"]
           : []),
         `Length: ${length}`,
-        locationType === "client" ? `Their location — ${zip}` : "My studio",
+        locationType === "client"
+          ? `Their location — ${locationLabel}`
+          : "My studio",
         `When: ${preferredTime}`,
         "",
         note || "(no note)",

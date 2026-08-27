@@ -1,4 +1,5 @@
 import { isEmailValid } from "@/lib/leadCapture";
+import { parseCityState } from "@/lib/usStates";
 
 export type LocationType = "studio" | "client";
 export type Timing = "asap" | "scheduled";
@@ -8,7 +9,8 @@ export type InquiryDraft = {
   lastName: string;
   length: string;
   locationType: LocationType | "";
-  zip: string;
+  /** Free text, normalised to "Bowie, MD". Required only for client locations. */
+  cityState: string;
   timing: Timing | "";
   date: string;
   /** Display value from TIME_SLOTS, e.g. "3:30 PM". */
@@ -23,7 +25,7 @@ export const EMPTY_DRAFT: InquiryDraft = {
   lastName: "",
   length: "",
   locationType: "",
-  zip: "",
+  cityState: "",
   timing: "",
   date: "",
   time: "",
@@ -45,6 +47,7 @@ export type DurationOption = {
  */
 export const DURATION_OPTIONS: DurationOption[] = [
   { id: "1-hour", label: "1 hour", value: "1 hour" },
+  { id: "90-min", label: "90 minutes", value: "90 minutes" },
   { id: "2-hour", label: "2 hours", value: "2 hours" },
   { id: "3-hour", label: "3 hours", value: "3 hours" },
   { id: "4-hour", label: "4 hours", value: "4 hours" },
@@ -84,8 +87,6 @@ function buildTimeSlots(): string[] {
 
 export const TIME_SLOTS: string[] = buildTimeSlots();
 
-const ZIP_RE = /^\d{5}$/;
-
 /**
  * Human-readable timing, stored in inquiries.preferred_time and used in the email subject.
  */
@@ -105,8 +106,8 @@ export function timingPhrase(draft: InquiryDraft): string {
   return `${pretty} at ${draft.time}`;
 }
 
-export function isZipValid(zip: string): boolean {
-  return ZIP_RE.test(zip.trim());
+export function isCityStateValid(value: string): boolean {
+  return parseCityState(value) !== null;
 }
 
 /** Client-side gate for enabling the submit button. */
@@ -115,7 +116,8 @@ export function isDraftReady(draft: InquiryDraft): boolean {
   if (draft.lastName.trim().length < 2) return false;
   if (draft.length === "") return false;
   if (draft.locationType === "") return false;
-  if (draft.locationType === "client" && !isZipValid(draft.zip)) return false;
+  if (draft.locationType === "client" && !isCityStateValid(draft.cityState))
+    return false;
   if (draft.timing === "") return false;
   if (draft.timing === "scheduled") {
     if (!draft.date || !draft.time) return false;
