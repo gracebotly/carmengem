@@ -29,7 +29,7 @@ export default function Nav() {
     >
       <nav className="relative z-10 mx-auto flex h-16 max-w-6xl items-center justify-between px-6 md:h-[72px]">
         <a
-          href="#hero"
+          href="#about"
           className={`font-body text-lg tracking-[0.08em] transition-colors duration-500 ${
             dark ? "text-shell" : "text-ink"
           }`}
