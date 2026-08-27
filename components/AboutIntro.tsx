@@ -29,7 +29,7 @@ export default function AboutIntro() {
       <div className="relative aspect-[2/3] w-full overflow-hidden">
         <Image
           src="/images/high%207%20watermark.jpg"
-          alt="Carmen Gem"
+          alt="Carmen Gem, licensed massage therapist in Bowie, Maryland"
           fill
           sizes="(max-width: 768px) 100vw, 45vw"
           className="object-cover"
