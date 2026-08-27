@@ -10,14 +10,3 @@ export const SERVICES: Service[] = [
   { id: "3-hour", duration: "3 hours", price: "$1,800" },
   { id: "4-hour", duration: "4 hours", price: "$2,400" },
 ];
-
-export type Modality = {
-  id: string;
-  label: string;
-};
-
-/**
- * Modality list — intentionally empty pending Carmen's final list.
- * Adding entries here populates the contact form select with no other changes.
- */
-export const MODALITIES: Modality[] = [];

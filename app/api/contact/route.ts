@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { DURATION_VALUES } from "@/lib/inquiry";
 import { getServiceClient } from "@/lib/supabase";
 
 export const runtime = "nodejs";
@@ -26,7 +27,6 @@ export async function POST(request: Request) {
   const email = str(body.email);
   const phone = str(body.phone);
   const note = str(body.note);
-  const modality = str(body.modality);
   const length = str(body.length);
   const locationType = str(body.locationType);
   const zip = str(body.zip);
@@ -36,7 +36,11 @@ export async function POST(request: Request) {
 
   if (name.length < 2) errors.name = "Enter your name.";
   if (!EMAIL_RE.test(email)) errors.email = "Enter a valid email address.";
-  if (length === "") errors.length = "Choose a session length.";
+  if (length === "") {
+    errors.length = "Choose a session length.";
+  } else if (!DURATION_VALUES.includes(length)) {
+    errors.length = "Choose a session length.";
+  }
   if (locationType !== "studio" && locationType !== "client") {
     errors.locationType = "Choose where your session begins.";
   }
@@ -48,7 +52,6 @@ export async function POST(request: Request) {
     name.length > 100 ||
     email.length > 200 ||
     phone.length > 40 ||
-    modality.length > 100 ||
     preferredTime.length > 200 ||
     note.length > 4000
   ) {
@@ -65,7 +68,7 @@ export async function POST(request: Request) {
       name,
       email,
       phone: phone || null,
-      service: modality || length,
+      service: length,
       location_type: locationType,
       zip: locationType === "client" ? zip : null,
       city: null,
@@ -94,7 +97,6 @@ export async function POST(request: Request) {
         `Name: ${name}`,
         `Phone: ${phone || "Not given"}`,
         `Email: ${email}`,
-        `Service: ${modality || "Not specified"}`,
         `Length: ${length}`,
         locationType === "client" ? `Their location — ${zip}` : "My studio",
         `When: ${preferredTime}`,

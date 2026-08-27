@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { SERVICES, MODALITIES } from "@/lib/services";
 import {
+  DURATION_OPTIONS,
   EMPTY_DRAFT,
   HOURS,
+  INQUIRE_VALUE,
   LOCATION_OPTIONS,
   MERIDIEMS,
   MINUTES,
@@ -106,39 +107,26 @@ export default function ContactForm() {
         {errors.name && <p className="mt-2 text-sm text-rose">{errors.name}</p>}
       </div>
 
-      <div className="mt-9">
-        <label htmlFor="modality" className="eyebrow text-sand">Service</label>
-        <select
-          id="modality"
-          className={FIELD}
-          value={draft.modality}
-          onChange={(e) => update("modality", e.target.value)}
-          disabled={MODALITIES.length === 0}
-        >
-          <option value="">
-            {MODALITIES.length === 0 ? "Coming soon" : "Select a service"}
-          </option>
-          {MODALITIES.map((m) => (
-            <option key={m.id} value={m.label}>{m.label}</option>
-          ))}
-        </select>
-      </div>
-
       <fieldset className="mt-9">
         <legend className="eyebrow text-sand">Session length</legend>
         <div className="mt-3 flex flex-wrap gap-2.5">
-          {SERVICES.map((service) => (
+          {DURATION_OPTIONS.map((option) => (
             <button
-              key={service.id}
+              key={option.id}
               type="button"
-              aria-pressed={draft.length === service.duration}
-              onClick={() => update("length", service.duration)}
-              className={chip(draft.length === service.duration)}
+              aria-pressed={draft.length === option.value}
+              onClick={() => update("length", option.value)}
+              className={chip(draft.length === option.value)}
             >
-              {service.duration}
+              {option.label}
             </button>
           ))}
         </div>
+        {draft.length === INQUIRE_VALUE && (
+          <p className="mt-3 text-sm font-light leading-[1.7] text-sand">
+            Tell me what you have in mind below and I&rsquo;ll come back to you with pricing.
+          </p>
+        )}
         {errors.length && <p className="mt-2 text-sm text-rose">{errors.length}</p>}
       </fieldset>
 

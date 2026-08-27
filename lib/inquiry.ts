@@ -4,7 +4,6 @@ export type Meridiem = "AM" | "PM";
 
 export type InquiryDraft = {
   name: string;
-  modality: string;
   length: string;
   locationType: LocationType | "";
   zip: string;
@@ -20,7 +19,6 @@ export type InquiryDraft = {
 
 export const EMPTY_DRAFT: InquiryDraft = {
   name: "",
-  modality: "",
   length: "",
   locationType: "",
   zip: "",
@@ -33,6 +31,29 @@ export const EMPTY_DRAFT: InquiryDraft = {
   phone: "",
   email: "",
 };
+
+export type DurationOption = {
+  id: string;
+  label: string;
+  /** Stored in inquiries.service and shown in the notification email. */
+  value: string;
+};
+
+/**
+ * Owned by the contact form, deliberately not derived from SERVICES.
+ * Durations offered and services priced are separate concerns — keep them separate.
+ */
+export const DURATION_OPTIONS: DurationOption[] = [
+  { id: "1-hour", label: "1 hour", value: "1 hour" },
+  { id: "2-hour", label: "2 hours", value: "2 hours" },
+  { id: "3-hour", label: "3 hours", value: "3 hours" },
+  { id: "4-hour", label: "4 hours", value: "4 hours" },
+  { id: "inquire", label: "Inquire", value: "Inquire — more than 4 hours" },
+];
+
+export const INQUIRE_VALUE = "Inquire — more than 4 hours";
+
+export const DURATION_VALUES: string[] = DURATION_OPTIONS.map((o) => o.value);
 
 export const LOCATION_OPTIONS: { value: LocationType; label: string }[] = [
   { value: "studio", label: "My studio in Bowie" },
