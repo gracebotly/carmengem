@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 import {
   DURATION_OPTIONS,
   EMPTY_DRAFT,
-  HOURS,
   INQUIRE_VALUE,
   LOCATION_OPTIONS,
-  MERIDIEMS,
-  MINUTES,
+  TIMING_OPTIONS,
+  TIME_SLOTS,
   isDraftReady,
   timingPhrase,
   type InquiryDraft,
@@ -23,16 +23,65 @@ import {
 
 type Status = "idle" | "submitting" | "success" | "error";
 
-const FIELD =
-  "w-full border-b border-line bg-transparent py-2.5 text-base font-light text-ink outline-none transition-colors placeholder:text-sand focus:border-rose";
+const FIELD_BASE =
+  "w-full border-b border-line bg-transparent py-2.5 text-base font-light outline-none transition-colors placeholder:text-sand focus:border-rose";
 
-const CHIP_BASE =
-  "eyebrow border px-4 py-2.5 transition-colors focus-visible:outline-none";
-const CHIP_ON = "border-rose bg-rose/10 text-ink";
-const CHIP_OFF = "border-line text-stone hover:border-sand hover:text-ink";
+const FIELD = `${FIELD_BASE} text-ink`;
 
-function chip(active: boolean) {
-  return `${CHIP_BASE} ${active ? CHIP_ON : CHIP_OFF}`;
+const SELECT_BASE = `${FIELD_BASE} cursor-pointer appearance-none pr-7`;
+
+type SelectFieldProps = {
+  id: string;
+  label: string;
+  placeholder: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+  hint?: ReactNode;
+  error?: string;
+};
+
+function SelectField({
+  id,
+  label,
+  placeholder,
+  value,
+  options,
+  onChange,
+  hint,
+  error,
+}: SelectFieldProps) {
+  return (
+    <div>
+      <label htmlFor={id} className="eyebrow text-sand">
+        {label}
+      </label>
+      <div className="relative mt-1">
+        <select
+          id={id}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={`${SELECT_BASE} ${value === "" ? "text-sand" : "text-ink"}`}
+        >
+          <option value="">{placeholder}</option>
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          size={16}
+          aria-hidden="true"
+          className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-sand"
+        />
+      </div>
+      {hint && (
+        <p className="mt-2 text-sm font-light leading-[1.7] text-sand">{hint}</p>
+      )}
+      {error && <p className="mt-2 text-sm text-rose">{error}</p>}
+    </div>
+  );
 }
 
 export default function ContactForm() {
@@ -180,161 +229,105 @@ export default function ContactForm() {
         <p className="eyebrow text-sand">The session</p>
       </div>
 
-      <fieldset className="mt-9">
-        <legend className="eyebrow text-sand">Session length</legend>
-        <div className="mt-3 flex flex-wrap gap-2.5">
-          {DURATION_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              aria-pressed={draft.length === option.value}
-              onClick={() => update("length", option.value)}
-              className={chip(draft.length === option.value)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        {draft.length === INQUIRE_VALUE && (
-          <p className="mt-3 text-sm font-light leading-[1.7] text-sand">
-            Tell me what you have in mind below and I&rsquo;ll come back to you with pricing.
-          </p>
-        )}
-        {errors.length && <p className="mt-2 text-sm text-rose">{errors.length}</p>}
-      </fieldset>
+      <div className="mt-9 space-y-7">
+        <SelectField
+          id="length"
+          label="Session length"
+          placeholder="Choose a length"
+          value={draft.length}
+          onChange={(value) => update("length", value)}
+          options={DURATION_OPTIONS.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
+          hint={
+            draft.length === INQUIRE_VALUE
+              ? "Tell me what you have in mind below and I’ll come back to you with pricing."
+              : undefined
+          }
+          error={errors.length}
+        />
 
-      <fieldset className="mt-9">
-        <legend className="eyebrow text-sand">Where does your session begin?</legend>
-        <div className="mt-3 flex flex-wrap gap-2.5">
-          {LOCATION_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              aria-pressed={draft.locationType === option.value}
-              onClick={() => update("locationType", option.value)}
-              className={chip(draft.locationType === option.value)}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        {errors.locationType && (
-          <p className="mt-2 text-sm text-rose">{errors.locationType}</p>
-        )}
-      </fieldset>
+        <SelectField
+          id="locationType"
+          label="Where does your session begin?"
+          placeholder="Choose a location"
+          value={draft.locationType}
+          onChange={(value) => update("locationType", value)}
+          options={LOCATION_OPTIONS.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
+          error={errors.locationType}
+        />
 
-      {draft.locationType === "client" && (
-        <div className="mt-7">
-          <label htmlFor="zip" className="eyebrow text-sand">Zip code</label>
-          <input
-            id="zip"
-            type="text"
-            inputMode="numeric"
-            maxLength={5}
-            placeholder="20774"
-            className={`${FIELD} max-w-[9rem]`}
-            value={draft.zip}
-            onChange={(e) => update("zip", e.target.value.replace(/\D/g, ""))}
-          />
-          {errors.zip && <p className="mt-2 text-sm text-rose">{errors.zip}</p>}
-        </div>
-      )}
-
-      <fieldset className="mt-9">
-        <legend className="eyebrow text-sand">When works?</legend>
-        <div className="mt-3 flex flex-wrap gap-2.5">
-          <button
-            type="button"
-            aria-pressed={draft.timing === "asap"}
-            onClick={() => update("timing", "asap")}
-            className={chip(draft.timing === "asap")}
-          >
-            As soon as you have an opening
-          </button>
-          <button
-            type="button"
-            aria-pressed={draft.timing === "scheduled"}
-            onClick={() => update("timing", "scheduled")}
-            className={chip(draft.timing === "scheduled")}
-          >
-            Pick a date
-          </button>
-        </div>
-        {errors.preferredTime && (
-          <p className="mt-2 text-sm text-rose">{errors.preferredTime}</p>
-        )}
-      </fieldset>
-
-      {draft.timing === "scheduled" && (
-        <div className="mt-7 grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-[1fr_auto_auto_auto]">
+        {draft.locationType === "client" && (
           <div>
-            <label htmlFor="date" className="eyebrow text-sand">Date</label>
+            <label htmlFor="zip" className="eyebrow text-sand">Zip code</label>
             <input
-              id="date"
-              type="date"
-              className={FIELD}
-              value={draft.date}
-              onChange={(e) => update("date", e.target.value)}
+              id="zip"
+              type="text"
+              inputMode="numeric"
+              maxLength={5}
+              placeholder="20774"
+              className={`${FIELD} max-w-[9rem]`}
+              value={draft.zip}
+              onChange={(e) => update("zip", e.target.value.replace(/\D/g, ""))}
+            />
+            {errors.zip && <p className="mt-2 text-sm text-rose">{errors.zip}</p>}
+          </div>
+        )}
+
+        <SelectField
+          id="timing"
+          label="When works?"
+          placeholder="Choose when"
+          value={draft.timing}
+          onChange={(value) => update("timing", value)}
+          options={TIMING_OPTIONS.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
+          error={errors.preferredTime}
+        />
+
+        {draft.timing === "scheduled" && (
+          <div className="grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2">
+            <div>
+              <label htmlFor="date" className="eyebrow text-sand">Date</label>
+              <input
+                id="date"
+                type="date"
+                className={FIELD}
+                value={draft.date}
+                onChange={(e) => update("date", e.target.value)}
+              />
+            </div>
+            <SelectField
+              id="time"
+              label="Time"
+              placeholder="Choose a time"
+              value={draft.time}
+              onChange={(value) => update("time", value)}
+              options={TIME_SLOTS.map((slot) => ({ value: slot, label: slot }))}
             />
           </div>
-          <div>
-            <label htmlFor="hour" className="eyebrow text-sand">Hour</label>
-            <select
-              id="hour"
-              className={`${FIELD} min-w-[4.5rem]`}
-              value={draft.hour}
-              onChange={(e) => update("hour", e.target.value)}
-            >
-              <option value="">--</option>
-              {HOURS.map((h) => (
-                <option key={h} value={h}>{h}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="minute" className="eyebrow text-sand">Min</label>
-            <select
-              id="minute"
-              className={`${FIELD} min-w-[4.5rem]`}
-              value={draft.minute}
-              onChange={(e) => update("minute", e.target.value)}
-            >
-              <option value="">--</option>
-              {MINUTES.map((m) => (
-                <option key={m} value={m}>:{m}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="meridiem" className="eyebrow text-sand">AM / PM</label>
-            <select
-              id="meridiem"
-              className={`${FIELD} min-w-[4.5rem]`}
-              value={draft.meridiem}
-              onChange={(e) => update("meridiem", e.target.value)}
-            >
-              <option value="">--</option>
-              {MERIDIEMS.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
+        )}
 
-      <div className="mt-9">
-        <label htmlFor="note" className="eyebrow text-sand">
-          Anything I should know{" "}
-          <span className="normal-case tracking-normal">(optional)</span>
-        </label>
-        <textarea
-          id="note"
-          rows={2}
-          placeholder="Injuries, areas to focus on, what you're hoping for."
-          className={`${FIELD} resize-none`}
-          value={draft.note}
-          onChange={(e) => update("note", e.target.value)}
-        />
+        <div>
+          <label htmlFor="note" className="eyebrow text-sand">
+            Anything I should know{" "}
+            <span className="normal-case tracking-normal">(optional)</span>
+          </label>
+          <textarea
+            id="note"
+            rows={2}
+            placeholder="Injuries, areas to focus on, what you're hoping for."
+            className={`${FIELD} resize-none`}
+            value={draft.note}
+            onChange={(e) => update("note", e.target.value)}
+          />
+        </div>
       </div>
 
       {notice && <p className="mt-6 text-sm text-rose">{notice}</p>}
