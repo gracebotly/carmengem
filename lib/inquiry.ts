@@ -1,9 +1,12 @@
+import { isEmailValid } from "@/lib/leadCapture";
+
 export type LocationType = "studio" | "client";
 export type Timing = "asap" | "scheduled";
 export type Meridiem = "AM" | "PM";
 
 export type InquiryDraft = {
-  name: string;
+  firstName: string;
+  lastName: string;
   length: string;
   locationType: LocationType | "";
   zip: string;
@@ -18,7 +21,8 @@ export type InquiryDraft = {
 };
 
 export const EMPTY_DRAFT: InquiryDraft = {
-  name: "",
+  firstName: "",
+  lastName: "",
   length: "",
   locationType: "",
   zip: "",
@@ -93,7 +97,8 @@ export function isZipValid(zip: string): boolean {
 
 /** Client-side gate for enabling the submit button. */
 export function isDraftReady(draft: InquiryDraft): boolean {
-  if (draft.name.trim().length < 2) return false;
+  if (draft.firstName.trim().length < 2) return false;
+  if (draft.lastName.trim().length < 2) return false;
   if (draft.length === "") return false;
   if (draft.locationType === "") return false;
   if (draft.locationType === "client" && !isZipValid(draft.zip)) return false;
@@ -101,6 +106,6 @@ export function isDraftReady(draft: InquiryDraft): boolean {
   if (draft.timing === "scheduled") {
     if (!draft.date || !draft.hour || !draft.minute || !draft.meridiem) return false;
   }
-  if (draft.email.trim() === "") return false;
+  if (!isEmailValid(draft.email)) return false;
   return true;
 }
