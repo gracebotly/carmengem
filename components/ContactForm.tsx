@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DURATION_OPTIONS,
   EMPTY_DRAFT,
@@ -13,6 +13,13 @@ import {
   timingPhrase,
   type InquiryDraft,
 } from "@/lib/inquiry";
+import {
+  LEAD_ID_KEY,
+  formatPhone,
+  isEmailValid,
+  saveLead,
+  suggestEmail,
+} from "@/lib/leadCapture";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -34,8 +41,50 @@ export default function ContactForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState("");
+  const leadIdRef = useRef<string | null>(null);
+  const lastSavedRef = useRef("");
+  const suggestion = suggestEmail(draft.email);
 
   const ready = isDraftReady(draft);
+
+  useEffect(() => {
+    const stored = window.sessionStorage.getItem(LEAD_ID_KEY);
+    if (stored) leadIdRef.current = stored;
+  }, []);
+
+  // Email alone triggers capture. Phone is optional and joins the same row later.
+  useEffect(() => {
+    if (status === "success") return;
+    if (honeypot.length > 0) return;
+    if (!isEmailValid(draft.email)) return;
+
+    const signature = [
+      draft.firstName.trim(),
+      draft.lastName.trim(),
+      draft.email.trim(),
+      draft.phone.trim(),
+    ].join("|");
+
+    if (signature === lastSavedRef.current) return;
+
+    const timer = window.setTimeout(async () => {
+      lastSavedRef.current = signature;
+      const id = await saveLead({
+        firstName: draft.firstName,
+        lastName: draft.lastName,
+        email: draft.email,
+        phone: draft.phone,
+        leadId: leadIdRef.current,
+        company: honeypot,
+      });
+      if (id) {
+        leadIdRef.current = id;
+        window.sessionStorage.setItem(LEAD_ID_KEY, id);
+      }
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [draft.firstName, draft.lastName, draft.email, draft.phone, honeypot, status]);
 
   function update(field: keyof InquiryDraft, value: string) {
     setDraft((prev) => ({ ...prev, [field]: value }));
@@ -54,6 +103,7 @@ export default function ContactForm() {
         body: JSON.stringify({
           ...draft,
           preferredTime: timingPhrase(draft),
+          leadId: leadIdRef.current,
           company: honeypot,
         }),
       });
@@ -66,6 +116,7 @@ export default function ContactForm() {
         return;
       }
 
+      window.sessionStorage.removeItem(LEAD_ID_KEY);
       setStatus("success");
     } catch {
       setNotice("Something went wrong. Try again.");
@@ -94,17 +145,39 @@ export default function ContactForm() {
         className="pointer-events-none absolute h-0 w-0 opacity-0"
       />
 
-      <div>
-        <label htmlFor="name" className="eyebrow text-sand">Name</label>
-        <input
-          id="name"
-          type="text"
-          autoComplete="name"
-          className={FIELD}
-          value={draft.name}
-          onChange={(e) => update("name", e.target.value)}
-        />
-        {errors.name && <p className="mt-2 text-sm text-rose">{errors.name}</p>}
+      <p className="eyebrow text-sand">Your details</p>
+
+      <div className="mt-6 grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2">
+        <div>
+          <label htmlFor="firstName" className="eyebrow text-sand">First name</label>
+          <input id="firstName" type="text" autoComplete="given-name" className={FIELD} value={draft.firstName} onChange={(e) => update("firstName", e.target.value)} />
+          {errors.firstName && <p className="mt-2 text-sm text-rose">{errors.firstName}</p>}
+        </div>
+        <div>
+          <label htmlFor="lastName" className="eyebrow text-sand">Last name</label>
+          <input id="lastName" type="text" autoComplete="family-name" className={FIELD} value={draft.lastName} onChange={(e) => update("lastName", e.target.value)} />
+          {errors.lastName && <p className="mt-2 text-sm text-rose">{errors.lastName}</p>}
+        </div>
+        <div>
+          <label htmlFor="email" className="eyebrow text-sand">Email</label>
+          <input id="email" type="email" inputMode="email" autoComplete="email" className={FIELD} value={draft.email} onChange={(e) => update("email", e.target.value)} />
+          {suggestion && (
+            <button type="button" onClick={() => update("email", suggestion)} className="mt-2 text-left text-sm font-light text-rose underline underline-offset-4">
+              Did you mean {suggestion}?
+            </button>
+          )}
+          {errors.email && <p className="mt-2 text-sm text-rose">{errors.email}</p>}
+        </div>
+        <div>
+          <label htmlFor="phone" className="eyebrow text-sand">Phone</label>
+          <input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(301) 555-0142" className={FIELD} value={draft.phone} onChange={(e) => update("phone", formatPhone(e.target.value))} />
+          <p className="mt-2 text-sm font-light text-sand">Fastest way to reach you.</p>
+          {errors.phone && <p className="mt-2 text-sm text-rose">{errors.phone}</p>}
+        </div>
+      </div>
+
+      <div className="mt-14 border-t border-line pt-12">
+        <p className="eyebrow text-sand">The session</p>
       </div>
 
       <fieldset className="mt-9">
@@ -248,34 +321,6 @@ export default function ContactForm() {
           </div>
         </div>
       )}
-
-      <div className="mt-9 grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2">
-        <div>
-          <label htmlFor="email" className="eyebrow text-sand">Email</label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            className={FIELD}
-            value={draft.email}
-            onChange={(e) => update("email", e.target.value)}
-          />
-          {errors.email && <p className="mt-2 text-sm text-rose">{errors.email}</p>}
-        </div>
-        <div>
-          <label htmlFor="phone" className="eyebrow text-sand">
-            Phone <span className="normal-case tracking-normal">(optional)</span>
-          </label>
-          <input
-            id="phone"
-            type="tel"
-            autoComplete="tel"
-            className={FIELD}
-            value={draft.phone}
-            onChange={(e) => update("phone", e.target.value)}
-          />
-        </div>
-      </div>
 
       <div className="mt-9">
         <label htmlFor="note" className="eyebrow text-sand">
