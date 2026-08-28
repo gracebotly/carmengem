@@ -10,6 +10,7 @@ import {
   TIMING_OPTIONS,
   TIME_SLOTS,
   isDraftReady,
+  splitName,
   timingPhrase,
   type InquiryDraft,
 } from "@/lib/inquiry";
@@ -126,8 +127,7 @@ export default function ContactForm() {
     if (!isEmailValid(draft.email)) return;
 
     const signature = [
-      draft.firstName.trim(),
-      draft.lastName.trim(),
+      draft.name.trim(),
       draft.email.trim(),
       draft.phone.trim(),
     ].join("|");
@@ -136,9 +136,10 @@ export default function ContactForm() {
 
     const timer = window.setTimeout(async () => {
       lastSavedRef.current = signature;
+      const { firstName, lastName } = splitName(draft.name);
       const id = await saveLead({
-        firstName: draft.firstName,
-        lastName: draft.lastName,
+        firstName,
+        lastName,
         email: draft.email,
         phone: draft.phone,
         leadId: leadIdRef.current,
@@ -151,7 +152,7 @@ export default function ContactForm() {
     }, 900);
 
     return () => window.clearTimeout(timer);
-  }, [draft.firstName, draft.lastName, draft.email, draft.phone, honeypot, status]);
+  }, [draft.name, draft.email, draft.phone, honeypot, status]);
 
   function update(field: keyof InquiryDraft, value: string) {
     setDraft((prev) => ({ ...prev, [field]: value }));
@@ -212,24 +213,14 @@ export default function ContactForm() {
         className="pointer-events-none absolute h-0 w-0 opacity-0"
       />
 
-      <p className="eyebrow text-sand">Your details</p>
-
-      <div className="mt-6 grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2">
-        <div>
-          <label htmlFor="firstName" className="eyebrow text-sand">
-            First name
+      <div className="grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label htmlFor="name" className="eyebrow text-sand">
+            Name
             <Required />
           </label>
-          <input id="firstName" type="text" required autoComplete="given-name" className={FIELD} value={draft.firstName} onChange={(e) => update("firstName", e.target.value)} />
-          {errors.firstName && <p className="mt-2 text-sm text-rose">{errors.firstName}</p>}
-        </div>
-        <div>
-          <label htmlFor="lastName" className="eyebrow text-sand">
-            Last name
-            <Required />
-          </label>
-          <input id="lastName" type="text" required autoComplete="family-name" className={FIELD} value={draft.lastName} onChange={(e) => update("lastName", e.target.value)} />
-          {errors.lastName && <p className="mt-2 text-sm text-rose">{errors.lastName}</p>}
+          <input id="name" type="text" required autoComplete="name" className={FIELD} value={draft.name} onChange={(e) => update("name", e.target.value)} />
+          {errors.name && <p className="mt-2 text-sm text-rose">{errors.name}</p>}
         </div>
         <div>
           <label htmlFor="email" className="eyebrow text-sand">
@@ -246,20 +237,15 @@ export default function ContactForm() {
         </div>
         <div>
           <label htmlFor="phone" className="eyebrow text-sand">
-            Phone{" "}
-            <span className="normal-case tracking-normal">(optional)</span>
+            Phone
+            <Required />
           </label>
-          <input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(301) 555-0142" className={FIELD} value={draft.phone} onChange={(e) => update("phone", formatPhone(e.target.value))} />
-          <p className="mt-2 text-sm font-light text-sand">Fastest way to reach you.</p>
+          <input id="phone" type="tel" required inputMode="tel" autoComplete="tel" className={FIELD} value={draft.phone} onChange={(e) => update("phone", formatPhone(e.target.value))} />
           {errors.phone && <p className="mt-2 text-sm text-rose">{errors.phone}</p>}
         </div>
       </div>
 
-      <div className="mt-14 border-t border-line pt-12">
-        <p className="eyebrow text-sand">The session</p>
-      </div>
-
-      <div className="mt-9 space-y-7">
+      <div className="mt-7 space-y-7">
         <SelectField
           id="length"
           label="Session length"
@@ -314,10 +300,6 @@ export default function ContactForm() {
                 if (parsed) update("cityState", formatCityState(parsed));
               }}
             />
-            <p className="mt-2 text-sm font-light text-sand">
-              So I know how far I&rsquo;m travelling. I&rsquo;ll confirm the exact
-              address by text.
-            </p>
             {errors.cityState && (
               <p className="mt-2 text-sm text-rose">{errors.cityState}</p>
             )}

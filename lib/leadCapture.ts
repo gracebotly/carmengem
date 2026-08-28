@@ -5,10 +5,19 @@ export function isEmailValid(value: string): boolean {
   return email.length <= 200 && EMAIL_RE.test(email);
 }
 
-/** Ten to fifteen digits, ignoring formatting. Phone is optional — this only runs when present. */
+/**
+ * A real, dialable US number: exactly ten digits, with a valid area code and
+ * exchange. NANP forbids 0 or 1 as the first digit of either, so this rejects
+ * the junk people type to get past a required field — (111) 111-1111,
+ * (000) 000-0000 — while accepting every genuine US number.
+ *
+ * International numbers are intentionally not accepted; this is a Bowie, MD
+ * practice and an unreachable number is worse than a lost inquiry.
+ */
 export function isPhoneValid(value: string): boolean {
   const digits = value.replace(/\D/g, "");
-  return digits.length >= 10 && digits.length <= 15;
+  if (digits.length !== 10) return false;
+  return /^[2-9]\d{2}[2-9]\d{6}$/.test(digits);
 }
 
 /** Formats US numbers as (301) 555-0142 while typing. Leaves other lengths alone. */

@@ -1,12 +1,12 @@
-import { isEmailValid } from "@/lib/leadCapture";
+import { isEmailValid, isPhoneValid } from "@/lib/leadCapture";
 import { parseCityState } from "@/lib/usStates";
 
 export type LocationType = "studio" | "client";
 export type Timing = "asap" | "scheduled";
 
 export type InquiryDraft = {
-  firstName: string;
-  lastName: string;
+  /** One field. Split into first/last only when it is stored. */
+  name: string;
   length: string;
   locationType: LocationType | "";
   /** Free text, normalised to "Bowie, MD". Required only for client locations. */
@@ -21,8 +21,7 @@ export type InquiryDraft = {
 };
 
 export const EMPTY_DRAFT: InquiryDraft = {
-  firstName: "",
-  lastName: "",
+  name: "",
   length: "",
   locationType: "",
   cityState: "",
@@ -106,14 +105,28 @@ export function timingPhrase(draft: InquiryDraft): string {
   return `${pretty} at ${draft.time}`;
 }
 
+/**
+ * Splits one typed name for the first_name / last_name columns. The first word
+ * is the first name, everything after it is the last name. A single word leaves
+ * lastName empty — accepted by design, the form does not demand a surname.
+ */
+export function splitName(full: string): { firstName: string; lastName: string } {
+  const cleaned = full.trim().replace(/\s+/g, " ");
+  const space = cleaned.indexOf(" ");
+  if (space === -1) return { firstName: cleaned, lastName: "" };
+  return {
+    firstName: cleaned.slice(0, space),
+    lastName: cleaned.slice(space + 1),
+  };
+}
+
 export function isCityStateValid(value: string): boolean {
   return parseCityState(value) !== null;
 }
 
 /** Client-side gate for enabling the submit button. */
 export function isDraftReady(draft: InquiryDraft): boolean {
-  if (draft.firstName.trim().length < 2) return false;
-  if (draft.lastName.trim().length < 2) return false;
+  if (draft.name.trim().length < 2) return false;
   if (draft.length === "") return false;
   if (draft.locationType === "") return false;
   if (draft.locationType === "client" && !isCityStateValid(draft.cityState))
@@ -123,5 +136,6 @@ export function isDraftReady(draft: InquiryDraft): boolean {
     if (!draft.date || !draft.time) return false;
   }
   if (!isEmailValid(draft.email)) return false;
+  if (!isPhoneValid(draft.phone)) return false;
   return true;
 }
