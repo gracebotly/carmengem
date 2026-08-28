@@ -1,7 +1,9 @@
 import { promises as dns } from "node:dns";
 import { Resend } from "resend";
+import { buildClientEmail, buildOwnerEmail, type InquirySummary } from "@/lib/emails";
 import { DURATION_VALUES, splitName } from "@/lib/inquiry";
 import { isPhoneValid } from "@/lib/leadCapture";
+import { BUSINESS } from "@/lib/site";
 import { getServiceClient } from "@/lib/supabase";
 import { formatCityState, parseCityState, type CityState } from "@/lib/usStates";
 
@@ -136,31 +138,60 @@ export async function POST(request: Request) {
     );
   }
 
+  const summary: InquirySummary = {
+    name,
+    email,
+    phone,
+    length,
+    locationLabel,
+    atClientLocation: locationType === "client",
+    preferredTime,
+    note,
+    emailStatus,
+  };
+
+  // The inquiry is already saved. Email problems are logged, never surfaced to
+  // the visitor and never allowed to fail the request — but they must not be
+  // invisible either, which is what the previous bare `catch {}` made them.
+  const FROM = `${BUSINESS.name} <noreply@carmengem.com>`;
+
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: "Carmen Gem <noreply@carmengem.com>",
-      to: process.env.OWNER_EMAIL ?? "",
-      replyTo: email,
-      subject: `${name} — ${length}, ${locationLabel}, ${preferredTime}`,
-      text: [
-        `Name: ${name}`,
-        `Phone: ${phone}`,
-        `Email: ${email}`,
-        ...(emailStatus === "no_mx"
-          ? ["** This email domain has no mail server. A reply may bounce. **"]
-          : []),
-        `Length: ${length}`,
-        locationType === "client"
-          ? `Their location — ${locationLabel}`
-          : "My studio",
-        `When: ${preferredTime}`,
-        "",
-        note || "(no note)",
-      ].join("\n"),
-    });
-  } catch {
-    // Inquiry is stored. Do not fail the request on email error.
+    const owner = buildOwnerEmail(summary);
+    const client = buildClientEmail(summary);
+
+    const [ownerResult, clientResult] = await Promise.allSettled([
+      resend.emails.send({
+        from: FROM,
+        to: process.env.OWNER_EMAIL ?? "",
+        replyTo: email,
+        subject: owner.subject,
+        text: owner.text,
+        html: owner.html,
+      }),
+      resend.emails.send({
+        from: FROM,
+        to: email,
+        replyTo: BUSINESS.email,
+        subject: client.subject,
+        text: client.text,
+        html: client.html,
+      }),
+    ]);
+
+    if (ownerResult.status === "rejected") {
+      console.error("[contact] owner email failed:", ownerResult.reason);
+    } else if (ownerResult.value.error) {
+      console.error("[contact] owner email rejected:", ownerResult.value.error);
+    }
+
+    if (clientResult.status === "rejected") {
+      console.error("[contact] client email failed:", clientResult.reason);
+    } else if (clientResult.value.error) {
+      console.error("[contact] client email rejected:", clientResult.value.error);
+    }
+  } catch (error) {
+    console.error("[contact] email step failed:", error);
   }
 
   return Response.json({ ok: true });

@@ -195,10 +195,50 @@ export default function ContactForm() {
   }
 
   if (status === "success") {
+    const firstName = draft.name.trim().split(" ")[0] || "there";
+    const locationLabel =
+      draft.locationType === "client"
+        ? draft.cityState
+        : LOCATION_OPTIONS.find((o) => o.value === draft.locationType)?.label ?? "";
+
+    const summaryRows: [string, string][] = [
+      ["Session", draft.length],
+      [draft.locationType === "client" ? "Your location" : "Location", locationLabel],
+      ["When", timingPhrase(draft)],
+      ["Email", draft.email],
+      ["Phone", draft.phone],
+    ];
+
     return (
-      <p className="max-w-lg text-base font-light leading-[1.75] text-stone">
-        Thank you. Your inquiry is in — I&rsquo;ll text you back shortly to confirm a time.
-      </p>
+      <div className="max-w-lg">
+        <p className="font-display text-[26px] leading-[1.25] text-ink md:text-[32px]">
+          Thank you, {firstName}.
+        </p>
+        <p className="mt-5 text-base font-light leading-[1.75] text-stone">
+          Your inquiry has reached me. I&rsquo;ll reply personally to confirm a
+          time. A copy of the details below is on its way to {draft.email}.
+        </p>
+
+        <dl className="mt-10 border-t border-line">
+          {summaryRows.map(([label, value]) => (
+            <div
+              key={label}
+              className="flex items-baseline justify-between gap-6 border-b border-line py-3.5"
+            >
+              <dt className="eyebrow shrink-0 text-sand">{label}</dt>
+              <dd className="text-right text-base font-light text-ink">
+                {value || "—"}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        {draft.note && (
+          <p className="mt-6 text-sm font-light leading-[1.7] text-sand">
+            Your note: {draft.note}
+          </p>
+        )}
+      </div>
     );
   }
 
