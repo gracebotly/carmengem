@@ -139,7 +139,7 @@ export async function POST(request: Request) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
-      from: "Carmen Gem <onboarding@resend.dev>",
+      from: "Carmen Gem <noreply@carmengem.com>",
       to: process.env.OWNER_EMAIL ?? "",
       replyTo: email,
       subject: `${name} — ${length}, ${locationLabel}, ${preferredTime}`,
