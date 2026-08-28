@@ -31,6 +31,19 @@ const FIELD = `${FIELD_BASE} text-ink`;
 
 const SELECT_BASE = `${FIELD_BASE} cursor-pointer appearance-none pr-7`;
 
+/**
+ * Visual marker for a field the form will not submit without. Hidden from
+ * screen readers — they get the same information from the input's own
+ * `required` attribute, and hearing "star" after every label is noise.
+ */
+function Required() {
+  return (
+    <span aria-hidden="true" className="text-rose">
+      {" "}*
+    </span>
+  );
+}
+
 type SelectFieldProps = {
   id: string;
   label: string;
@@ -38,6 +51,7 @@ type SelectFieldProps = {
   value: string;
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
+  required?: boolean;
   hint?: ReactNode;
   error?: string;
 };
@@ -49,6 +63,7 @@ function SelectField({
   value,
   options,
   onChange,
+  required = false,
   hint,
   error,
 }: SelectFieldProps) {
@@ -56,11 +71,13 @@ function SelectField({
     <div>
       <label htmlFor={id} className="eyebrow text-sand">
         {label}
+        {required && <Required />}
       </label>
       <div className="relative mt-1">
         <select
           id={id}
           value={value}
+          required={required}
           onChange={(event) => onChange(event.target.value)}
           className={`${SELECT_BASE} ${value === "" ? "text-sand" : "text-ink"}`}
         >
@@ -199,18 +216,27 @@ export default function ContactForm() {
 
       <div className="mt-6 grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2">
         <div>
-          <label htmlFor="firstName" className="eyebrow text-sand">First name</label>
-          <input id="firstName" type="text" autoComplete="given-name" className={FIELD} value={draft.firstName} onChange={(e) => update("firstName", e.target.value)} />
+          <label htmlFor="firstName" className="eyebrow text-sand">
+            First name
+            <Required />
+          </label>
+          <input id="firstName" type="text" required autoComplete="given-name" className={FIELD} value={draft.firstName} onChange={(e) => update("firstName", e.target.value)} />
           {errors.firstName && <p className="mt-2 text-sm text-rose">{errors.firstName}</p>}
         </div>
         <div>
-          <label htmlFor="lastName" className="eyebrow text-sand">Last name</label>
-          <input id="lastName" type="text" autoComplete="family-name" className={FIELD} value={draft.lastName} onChange={(e) => update("lastName", e.target.value)} />
+          <label htmlFor="lastName" className="eyebrow text-sand">
+            Last name
+            <Required />
+          </label>
+          <input id="lastName" type="text" required autoComplete="family-name" className={FIELD} value={draft.lastName} onChange={(e) => update("lastName", e.target.value)} />
           {errors.lastName && <p className="mt-2 text-sm text-rose">{errors.lastName}</p>}
         </div>
         <div>
-          <label htmlFor="email" className="eyebrow text-sand">Email</label>
-          <input id="email" type="email" inputMode="email" autoComplete="email" className={FIELD} value={draft.email} onChange={(e) => update("email", e.target.value)} />
+          <label htmlFor="email" className="eyebrow text-sand">
+            Email
+            <Required />
+          </label>
+          <input id="email" type="email" required inputMode="email" autoComplete="email" className={FIELD} value={draft.email} onChange={(e) => update("email", e.target.value)} />
           {suggestion && (
             <button type="button" onClick={() => update("email", suggestion)} className="mt-2 text-left text-sm font-light text-rose underline underline-offset-4">
               Did you mean {suggestion}?
@@ -219,7 +245,10 @@ export default function ContactForm() {
           {errors.email && <p className="mt-2 text-sm text-rose">{errors.email}</p>}
         </div>
         <div>
-          <label htmlFor="phone" className="eyebrow text-sand">Phone</label>
+          <label htmlFor="phone" className="eyebrow text-sand">
+            Phone{" "}
+            <span className="normal-case tracking-normal">(optional)</span>
+          </label>
           <input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(301) 555-0142" className={FIELD} value={draft.phone} onChange={(e) => update("phone", formatPhone(e.target.value))} />
           <p className="mt-2 text-sm font-light text-sand">Fastest way to reach you.</p>
           {errors.phone && <p className="mt-2 text-sm text-rose">{errors.phone}</p>}
@@ -237,6 +266,7 @@ export default function ContactForm() {
           placeholder="Choose a length"
           value={draft.length}
           onChange={(value) => update("length", value)}
+          required
           options={DURATION_OPTIONS.map((option) => ({
             value: option.value,
             label: option.label,
@@ -255,6 +285,7 @@ export default function ContactForm() {
           placeholder="Choose a location"
           value={draft.locationType}
           onChange={(value) => update("locationType", value)}
+          required
           options={LOCATION_OPTIONS.map((option) => ({
             value: option.value,
             label: option.label,
@@ -266,10 +297,12 @@ export default function ContactForm() {
           <div>
             <label htmlFor="cityState" className="eyebrow text-sand">
               City and state
+              <Required />
             </label>
             <input
               id="cityState"
               type="text"
+              required
               autoComplete="address-level2"
               maxLength={80}
               placeholder="Bowie, MD"
@@ -297,6 +330,7 @@ export default function ContactForm() {
           placeholder="Choose when"
           value={draft.timing}
           onChange={(value) => update("timing", value)}
+          required
           options={TIMING_OPTIONS.map((option) => ({
             value: option.value,
             label: option.label,
@@ -307,10 +341,14 @@ export default function ContactForm() {
         {draft.timing === "scheduled" && (
           <div className="grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2">
             <div>
-              <label htmlFor="date" className="eyebrow text-sand">Date</label>
+              <label htmlFor="date" className="eyebrow text-sand">
+                Date
+                <Required />
+              </label>
               <input
                 id="date"
                 type="date"
+                required
                 className={FIELD}
                 value={draft.date}
                 onChange={(e) => update("date", e.target.value)}
@@ -322,6 +360,7 @@ export default function ContactForm() {
               placeholder="Choose a time"
               value={draft.time}
               onChange={(value) => update("time", value)}
+              required
               options={TIME_SLOTS.map((slot) => ({ value: slot, label: slot }))}
             />
           </div>
@@ -335,7 +374,6 @@ export default function ContactForm() {
           <textarea
             id="note"
             rows={2}
-            placeholder="Injuries, areas to focus on, what you're hoping for."
             className={`${FIELD} resize-none`}
             value={draft.note}
             onChange={(e) => update("note", e.target.value)}
