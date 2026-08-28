@@ -53,8 +53,17 @@ function textBlock(rows: [string, string][]): string {
 /**
  * Inline styles only — every mail client strips <style> blocks, and many strip
  * classes. Kept to one column so it reads on a phone without zooming.
+ *
+ * `outroHtml` is trusted markup built by the functions below, not user input,
+ * so it is inserted unescaped — that is what allows a real mailto link. Every
+ * value that comes from the visitor still goes through escapeHtml().
  */
-function htmlShell(heading: string, intro: string, rows: [string, string][], outro: string): string {
+function htmlShell(
+  heading: string,
+  intro: string,
+  rows: [string, string][],
+  outroHtml: string
+): string {
   const cells = rows
     .map(
       ([label, value]) => `
@@ -75,30 +84,47 @@ function htmlShell(heading: string, intro: string, rows: [string, string][], out
       <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;border-top:1px solid #e8e3da;">
         ${cells}
       </table>
-      <p style="margin:28px 0 0;font-size:15px;line-height:1.7;color:#57524b;">${escapeHtml(outro)}</p>
+      <p style="margin:28px 0 0;font-size:15px;line-height:1.7;color:#57524b;">${outroHtml}</p>
     </div>
   </body>
 </html>`;
 }
 
-/** Sent to Carmen. replyTo is set to the client, so replying reaches them. */
+/** A clickable address, safe to drop into the outro slot. */
+function mailtoLink(address: string): string {
+  const safe = escapeHtml(address);
+  return `<a href="mailto:${safe}" style="color:#8a5a4a;">${safe}</a>`;
+}
+
+/**
+ * Sent to Carmen. replyTo is the client, so replying reaches them — and the
+ * outro names the address outright rather than assuming she trusts the button.
+ */
 export function buildOwnerEmail(summary: InquirySummary): BuiltEmail {
   const rows = detailRows(summary);
-  const warning =
+  const outroText =
     summary.emailStatus === "no_mx"
-      ? "Heads up: this email domain has no mail server, so a reply may bounce."
-      : "Reply to this message to answer them directly.";
+      ? `Heads up: ${summary.email} has no mail server, so a reply may bounce. Their phone is ${summary.phone}.`
+      : `Reply to this message and it goes straight to ${summary.email}.`;
+  const outroHtml =
+    summary.emailStatus === "no_mx"
+      ? `Heads up: ${mailtoLink(summary.email)} has no mail server, so a reply may bounce. Their phone is ${escapeHtml(summary.phone)}.`
+      : `Reply to this message and it goes straight to ${mailtoLink(summary.email)}.`;
 
   return {
     subject: `New inquiry — ${summary.name}, ${summary.length}, ${summary.preferredTime}`,
-    text: [`New inquiry from ${summary.name}`, "", textBlock(rows), "", warning].join("\n"),
-    html: htmlShell("New inquiry", `${summary.name} just sent an inquiry through the site.`, rows, warning),
+    text: [`New inquiry from ${summary.name}`, "", textBlock(rows), "", outroText].join("\n"),
+    html: htmlShell("New inquiry", `${summary.name} just sent an inquiry through the site.`, rows, outroHtml),
   };
 }
 
 /**
  * Sent to the client. Says "received" rather than "confirmed" — Carmen replies
  * personally to settle the time, so the form itself never promises a slot.
+ *
+ * The closing line names Carmen's address instead of saying "reply to this
+ * message": the visible sender is noreply@, and telling someone to reply to a
+ * noreply address reads as broken even though replyTo is set correctly.
  */
 export function buildClientEmail(summary: InquirySummary): BuiltEmail {
   const firstName = summary.name.trim().split(" ")[0] || "there";
@@ -113,7 +139,7 @@ export function buildClientEmail(summary: InquirySummary): BuiltEmail {
       "",
       textBlock(rows),
       "",
-      `If anything above is wrong, reply to this message and I will correct it.`,
+      `If anything above is wrong, email me at ${BUSINESS.email} and I will correct it.`,
       "",
       BUSINESS.name,
     ].join("\n"),
@@ -121,7 +147,7 @@ export function buildClientEmail(summary: InquirySummary): BuiltEmail {
       `Thank you, ${firstName}.`,
       "Your inquiry has reached me and I will reply personally to confirm a time. Below is a record of what you sent.",
       rows,
-      "If anything above is wrong, reply to this message and I will correct it."
+      `If anything above is wrong, email me at ${mailtoLink(BUSINESS.email)} and I will correct it.`
     ),
   };
 }
