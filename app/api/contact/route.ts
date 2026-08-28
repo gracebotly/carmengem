@@ -155,6 +155,14 @@ export async function POST(request: Request) {
   // invisible either, which is what the previous bare `catch {}` made them.
   const FROM = `${BUSINESS.name} <noreply@carmengem.com>`;
 
+  // A domain with no mail server will hard-bounce, and bounces on a sending
+  // domain this new are what get a Resend account suspended. Carmen's
+  // notification still goes out and carries the warning in its own copy.
+  const sendClient = emailStatus === "ok";
+  if (!sendClient) {
+    console.warn("[contact] client confirmation skipped, no mail server:", email);
+  }
+
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const owner = buildOwnerEmail(summary);
@@ -169,14 +177,16 @@ export async function POST(request: Request) {
         text: owner.text,
         html: owner.html,
       }),
-      resend.emails.send({
-        from: FROM,
-        to: email,
-        replyTo: BUSINESS.email,
-        subject: client.subject,
-        text: client.text,
-        html: client.html,
-      }),
+      sendClient
+        ? resend.emails.send({
+            from: FROM,
+            to: email,
+            replyTo: BUSINESS.email,
+            subject: client.subject,
+            text: client.text,
+            html: client.html,
+          })
+        : Promise.resolve({ data: null, error: null }),
     ]);
 
     if (ownerResult.status === "rejected") {
