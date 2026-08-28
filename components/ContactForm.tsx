@@ -8,7 +8,9 @@ import {
   INQUIRE_VALUE,
   LOCATION_OPTIONS,
   TIMING_OPTIONS,
-  TIME_SLOTS,
+  HOURS,
+  MERIDIEMS,
+  MINUTES,
   isDraftReady,
   splitName,
   timingPhrase,
@@ -321,8 +323,8 @@ export default function ContactForm() {
         />
 
         {draft.timing === "scheduled" && (
-          <div className="grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2">
-            <div>
+          <div className="space-y-7">
+            <div className="sm:max-w-xs">
               <label htmlFor="date" className="eyebrow text-sand">
                 Date
                 <Required />
@@ -336,15 +338,43 @@ export default function ContactForm() {
                 onChange={(e) => update("date", e.target.value)}
               />
             </div>
-            <SelectField
-              id="time"
-              label="Time"
-              placeholder="Choose a time"
-              value={draft.time}
-              onChange={(value) => update("time", value)}
-              required
-              options={TIME_SLOTS.map((slot) => ({ value: slot, label: slot }))}
-            />
+
+            {/* Three short lists read faster than one long one. */}
+            <div className="grid max-w-xs grid-cols-3 gap-x-3">
+              <SelectField
+                id="hour"
+                label="Hour"
+                placeholder="--"
+                value={draft.hour}
+                onChange={(value) => update("hour", value)}
+                required
+                options={HOURS.map((hour) => ({ value: hour, label: hour }))}
+              />
+              <SelectField
+                id="minute"
+                label="Min"
+                placeholder="--"
+                value={draft.minute}
+                onChange={(value) => update("minute", value)}
+                required
+                options={MINUTES.map((minute) => ({
+                  value: minute,
+                  label: `:${minute}`,
+                }))}
+              />
+              <SelectField
+                id="meridiem"
+                label="AM/PM"
+                placeholder="--"
+                value={draft.meridiem}
+                onChange={(value) => update("meridiem", value)}
+                required
+                options={MERIDIEMS.map((meridiem) => ({
+                  value: meridiem,
+                  label: meridiem,
+                }))}
+              />
+            </div>
           </div>
         )}
 

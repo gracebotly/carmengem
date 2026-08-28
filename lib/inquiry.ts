@@ -3,6 +3,7 @@ import { parseCityState } from "@/lib/usStates";
 
 export type LocationType = "studio" | "client";
 export type Timing = "asap" | "scheduled";
+export type Meridiem = "AM" | "PM";
 
 export type InquiryDraft = {
   /** One field. Split into first/last only when it is stored. */
@@ -13,8 +14,11 @@ export type InquiryDraft = {
   cityState: string;
   timing: Timing | "";
   date: string;
-  /** Display value from TIME_SLOTS, e.g. "3:30 PM". */
-  time: string;
+  /** Clock hour, "1"–"12". */
+  hour: string;
+  /** Minutes, "00" or "30". */
+  minute: string;
+  meridiem: Meridiem | "";
   note: string;
   phone: string;
   email: string;
@@ -27,7 +31,9 @@ export const EMPTY_DRAFT: InquiryDraft = {
   cityState: "",
   timing: "",
   date: "",
-  time: "",
+  hour: "",
+  minute: "",
+  meridiem: "",
   note: "",
   phone: "",
   email: "",
@@ -67,24 +73,17 @@ export const TIMING_OPTIONS: { value: Timing; label: string }[] = [
   { value: "scheduled", label: "Pick a date and time" },
 ];
 
-/** 8:00 AM through 8:30 PM, every 30 minutes. Adjust the bounds here only. */
-function buildTimeSlots(): string[] {
-  const START_MINUTES = 8 * 60;
-  const END_MINUTES = 20 * 60 + 30;
-  const slots: string[] = [];
+/**
+ * The three parts of the time picker. Any hour of the clock is offered — a
+ * request outside your hours is a conversation, not a form error.
+ */
+export const HOURS: string[] = [
+  "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
+];
 
-  for (let total = START_MINUTES; total <= END_MINUTES; total += 30) {
-    const hour24 = Math.floor(total / 60);
-    const minute = total % 60;
-    const meridiem = hour24 < 12 ? "AM" : "PM";
-    const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
-    slots.push(`${hour12}:${String(minute).padStart(2, "0")} ${meridiem}`);
-  }
+export const MINUTES: string[] = ["00", "30"];
 
-  return slots;
-}
-
-export const TIME_SLOTS: string[] = buildTimeSlots();
+export const MERIDIEMS: Meridiem[] = ["AM", "PM"];
 
 /**
  * Human-readable timing, stored in inquiries.preferred_time and used in the email subject.
@@ -92,7 +91,7 @@ export const TIME_SLOTS: string[] = buildTimeSlots();
 export function timingPhrase(draft: InquiryDraft): string {
   if (draft.timing === "asap") return "As soon as you have an opening";
   if (draft.timing !== "scheduled") return "";
-  if (!draft.date || !draft.time) return "";
+  if (!draft.date || !draft.hour || !draft.minute || !draft.meridiem) return "";
 
   const [y, m, d] = draft.date.split("-").map(Number);
   const when = new Date(y, m - 1, d);
@@ -102,7 +101,7 @@ export function timingPhrase(draft: InquiryDraft): string {
     day: "numeric",
   });
 
-  return `${pretty} at ${draft.time}`;
+  return `${pretty} at ${draft.hour}:${draft.minute} ${draft.meridiem}`;
 }
 
 /**
@@ -133,7 +132,9 @@ export function isDraftReady(draft: InquiryDraft): boolean {
     return false;
   if (draft.timing === "") return false;
   if (draft.timing === "scheduled") {
-    if (!draft.date || !draft.time) return false;
+    if (!draft.date || !draft.hour || !draft.minute || !draft.meridiem) {
+      return false;
+    }
   }
   if (!isEmailValid(draft.email)) return false;
   if (!isPhoneValid(draft.phone)) return false;
