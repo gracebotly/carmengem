@@ -32,23 +32,6 @@ export default function Home() {
           A few quick fields and I&rsquo;ll get back to you with times that work.
         </p>
         <ContactForm />
-        <div className="mt-12 flex h-[60px] justify-center sm:justify-start">
-          <a
-            href="https://www.theeroticreview.com/site_listing/refer.asp?c2l0ZV9pZD0xMDE3NDY2ODAy"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Visit The Erotic Review (opens in a new tab)"
-            className="inline-flex h-full max-w-full opacity-80 transition-opacity hover:opacity-100"
-          >
-            {/* The externally hosted GIF is served directly to preserve animation. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://www.theeroticreview.com/site_listing/reviewed_seal.gif"
-              alt="The Erotic Review"
-              className="h-full w-auto max-w-full object-contain"
-            />
-          </a>
-        </div>
       </Section>
     </main>
   );
