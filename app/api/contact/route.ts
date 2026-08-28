@@ -1,6 +1,6 @@
 import { promises as dns } from "node:dns";
 import { Resend } from "resend";
-import { DURATION_VALUES } from "@/lib/inquiry";
+import { DURATION_VALUES, splitName } from "@/lib/inquiry";
 import { isPhoneValid } from "@/lib/leadCapture";
 import { getServiceClient } from "@/lib/supabase";
 import { formatCityState, parseCityState, type CityState } from "@/lib/usStates";
@@ -26,9 +26,8 @@ export async function POST(request: Request) {
     return Response.json({ ok: true });
   }
 
-  const firstName = str(body.firstName);
-  const lastName = str(body.lastName);
-  const name = [firstName, lastName].filter(Boolean).join(" ");
+  const name = str(body.name).replace(/\s+/g, " ");
+  const { firstName, lastName } = splitName(name);
   const leadId = str(body.leadId);
   const email = str(body.email);
   const phone = str(body.phone);
@@ -40,8 +39,7 @@ export async function POST(request: Request) {
 
   const errors: Record<string, string> = {};
 
-  if (firstName.length < 2) errors.firstName = "Enter your first name.";
-  if (lastName.length < 2) errors.lastName = "Enter your last name.";
+  if (name.length < 2) errors.name = "Enter your name.";
   // Phone stays optional. Only complain when it is present and malformed.
   if (phone !== "" && !isPhoneValid(phone)) {
     errors.phone = "That number looks incomplete.";
@@ -64,8 +62,7 @@ export async function POST(request: Request) {
   }
   if (preferredTime === "") errors.preferredTime = "Let me know when.";
   if (
-    firstName.length > 100 ||
-    lastName.length > 100 ||
+    name.length > 200 ||
     email.length > 200 ||
     phone.length > 40 ||
     preferredTime.length > 200 ||
@@ -94,7 +91,7 @@ export async function POST(request: Request) {
   const record = {
     name,
     first_name: firstName,
-    last_name: lastName,
+    last_name: lastName || null,
     email,
     phone: phone || null,
     service: length,
@@ -146,7 +143,7 @@ export async function POST(request: Request) {
       replyTo: email,
       subject: `${name} — ${length}, ${locationLabel}, ${preferredTime}`,
       text: [
-        `Name: ${firstName} ${lastName}`,
+        `Name: ${name}`,
         `Phone: ${phone || "Not given"}`,
         `Email: ${email}`,
         ...(emailStatus === "no_mx"
