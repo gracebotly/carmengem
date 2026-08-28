@@ -40,9 +40,10 @@ export async function POST(request: Request) {
   const errors: Record<string, string> = {};
 
   if (name.length < 2) errors.name = "Enter your name.";
-  // Phone stays optional. Only complain when it is present and malformed.
-  if (phone !== "" && !isPhoneValid(phone)) {
-    errors.phone = "That number looks incomplete.";
+  if (phone === "") {
+    errors.phone = "Enter your phone number.";
+  } else if (!isPhoneValid(phone)) {
+    errors.phone = "Enter a complete 10-digit US phone number.";
   }
   if (!EMAIL_RE.test(email)) errors.email = "Enter a valid email address.";
   if (length === "") {
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
     first_name: firstName,
     last_name: lastName || null,
     email,
-    phone: phone || null,
+    phone,
     service: length,
     location_type: locationType,
     // `zip` is retained in the table but no longer collected. Written null so a
@@ -144,7 +145,7 @@ export async function POST(request: Request) {
       subject: `${name} — ${length}, ${locationLabel}, ${preferredTime}`,
       text: [
         `Name: ${name}`,
-        `Phone: ${phone || "Not given"}`,
+        `Phone: ${phone}`,
         `Email: ${email}`,
         ...(emailStatus === "no_mx"
           ? ["** This email domain has no mail server. A reply may bounce. **"]

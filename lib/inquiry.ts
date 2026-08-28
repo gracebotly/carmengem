@@ -1,4 +1,4 @@
-import { isEmailValid } from "@/lib/leadCapture";
+import { isEmailValid, isPhoneValid } from "@/lib/leadCapture";
 import { parseCityState } from "@/lib/usStates";
 
 export type LocationType = "studio" | "client";
@@ -136,5 +136,6 @@ export function isDraftReady(draft: InquiryDraft): boolean {
     if (!draft.date || !draft.time) return false;
   }
   if (!isEmailValid(draft.email)) return false;
+  if (!isPhoneValid(draft.phone)) return false;
   return true;
 }

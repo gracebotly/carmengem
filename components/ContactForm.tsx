@@ -237,11 +237,10 @@ export default function ContactForm() {
         </div>
         <div>
           <label htmlFor="phone" className="eyebrow text-sand">
-            Phone{" "}
-            <span className="normal-case tracking-normal">(optional)</span>
+            Phone
+            <Required />
           </label>
-          <input id="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(301) 555-0142" className={FIELD} value={draft.phone} onChange={(e) => update("phone", formatPhone(e.target.value))} />
-          <p className="mt-2 text-sm font-light text-sand">Fastest way to reach you.</p>
+          <input id="phone" type="tel" required inputMode="tel" autoComplete="tel" className={FIELD} value={draft.phone} onChange={(e) => update("phone", formatPhone(e.target.value))} />
           {errors.phone && <p className="mt-2 text-sm text-rose">{errors.phone}</p>}
         </div>
       </div>
