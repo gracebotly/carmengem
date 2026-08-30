@@ -25,14 +25,14 @@ const PORTRAIT = { width: 1333, height: 2000 };
  * Keep them distinct; nine identical strings help no one.
  */
 const ALT_TEXT: Record<string, string> = {
-  "high 1 watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
-  "high 2 watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
-  "high 3 watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
-  "high 5 watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
-  "high 8 watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
-  "high 6 watermark landscape.jpg":
+  "high-1-watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
+  "high-2-watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
+  "high-3-watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
+  "high-5-watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
+  "high-8-watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
+  "high-6-watermark-landscape.jpg":
     "The private massage studio in Bowie, Maryland",
-  "high 9 watermark landscape.jpg":
+  "high-9-watermark-landscape.jpg":
     "The private massage studio in Bowie, Maryland",
 };
 
@@ -69,8 +69,8 @@ export function getPortfolio(): PortfolioItem[] {
     .map((file) => {
       const size = /landscape/i.test(file) ? LANDSCAPE : PORTRAIT;
       return {
-        // Filenames contain spaces — encode or the request 404s.
-        src: `/portfolio/${encodeURIComponent(file)}`,
+        // Public files use URL-safe names and remain available as direct URLs.
+        src: `/portfolio/${file}`,
         alt: ALT_TEXT[file] ?? ALT_FALLBACK,
         ...size,
       };
