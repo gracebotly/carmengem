@@ -25,7 +25,7 @@ export type OpeningHours = {
 export const SITE_URL = "https://www.carmengem.com";
 
 /** Landscape crop used for link previews. Roughly 1.91:1, which is what Open Graph wants. */
-export const OG_IMAGE = "/portfolio/high%206%20watermark%20landscape.jpg";
+export const OG_IMAGE = "/portfolio/high-6-watermark-landscape.jpg";
 export const OG_IMAGE_WIDTH = 2000;
 export const OG_IMAGE_HEIGHT = 1125;
 
