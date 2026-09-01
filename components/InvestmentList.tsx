@@ -5,8 +5,7 @@ export default function InvestmentList() {
   return (
     <div className="grid items-start gap-14 md:grid-cols-2 md:gap-20">
       <div className="md:order-1">
-        <p className="eyebrow mb-6 text-sand">Donations</p>
-        <ul className="border-t border-line" aria-label="Donation rates">
+        <ul className="border-t border-line" aria-label="Investment rates">
           {SERVICES.map((service) => (
             <li
               key={service.id}
