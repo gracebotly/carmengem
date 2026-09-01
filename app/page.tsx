@@ -20,7 +20,7 @@ export default function Home() {
         <PortfolioGrid />
       </Section>
 
-      <Section id="investment" eyebrow="Rates" title="Investment" wide>
+      <Section id="investment" title="Investment" wide>
         <InvestmentList />
       </Section>
 
