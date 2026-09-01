@@ -23,17 +23,17 @@ export default function InvestmentList() {
 
         <div className="mt-10 space-y-6">
           <p>
-            Dates of 3 hours or longer require social time outside the room,
+            Dates of 4 hours or longer require social time outside the room,
             such as drinks or a meal.
           </p>
           <p>
             If you’d like to extend our session, and my schedule allows for it,
-            in-date extensions are $600 per hour.
+            in-date extensions are $300 per hour.
           </p>
           <p>
             I welcome all suitors who are polite and kind. I will never
             discriminate based on race, ethnicity, religion, sex, age, body
-            type, or disability, as long as you’re 21 or older. If you have
+            type, or disability, as long as you’re 18 or older. If you have
             accessibility needs, please let me know so I can accommodate you.
           </p>
           <p>
