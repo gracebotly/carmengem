@@ -420,7 +420,7 @@ export default function ContactForm() {
 
         <div>
           <label htmlFor="note" className="eyebrow text-sand">
-            Anything I should know{" "}
+            Tell me about yourself{" "}
             <span className="normal-case tracking-normal">(optional)</span>
           </label>
           <textarea
