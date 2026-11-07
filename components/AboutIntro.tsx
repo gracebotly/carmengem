@@ -26,10 +26,10 @@ export default function AboutIntro() {
       </div>
 
       {/* Portrait */}
-      <div className="relative aspect-[2/3] w-full overflow-hidden">
+      <div className="relative aspect-[3/4] w-full overflow-hidden">
         <Image
-          src="/images/high%207%20watermark.jpg"
-          alt="Carmen Gem, licensed massage therapist in Bowie, Maryland"
+          src="/images/5-high-view.jpeg"
+          alt="Carmen Gem"
           fill
           sizes="(max-width: 768px) 100vw, 45vw"
           className="object-cover"

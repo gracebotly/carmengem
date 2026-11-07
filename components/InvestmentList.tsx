@@ -44,8 +44,8 @@ export default function InvestmentList() {
       </div>
       <div className="relative aspect-[2/3] overflow-hidden md:order-2">
         <Image
-          src="/images/high%204%20watermark.jpg"
-          alt="Carmen Gem, therapeutic massage by appointment in Bowie, Maryland"
+          src="/images/1-high-view.JPG"
+          alt="Carmen Gem"
           fill
           sizes="(max-width: 768px) 100vw, 45vw"
           className="object-cover"

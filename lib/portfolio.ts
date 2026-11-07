@@ -11,32 +11,30 @@ export type PortfolioItem = {
 const DIR = path.join(process.cwd(), "public", "portfolio");
 const IMAGE = /\.(jpe?g|png|webp|avif)$/i;
 
-// The two crops in use. Dimensions prevent layout shift; the browser still
-// renders each file at its own true ratio, so a future photo slightly off
-// these numbers is harmless.
-const LANDSCAPE = { width: 2000, height: 1125 };
-const PORTRAIT = { width: 1333, height: 2000 };
+// Intrinsic dimensions reserve each photo's actual aspect ratio before loading.
+const IMAGE_SIZES: Record<string, { width: number; height: number }> = {
+  "2-high-view.JPG": { width: 1992, height: 3000 },
+  "3-high-view.JPG": { width: 2000, height: 3000 },
+  "4-high-view.JPG": { width: 2000, height: 3000 },
+  "6-high-view.jpeg": { width: 1920, height: 2560 },
+  "7-high-view.jpeg": { width: 1920, height: 2560 },
+  "8-high-view-landscape.jpg": { width: 2999, height: 2000 },
+  "9-high-view.jpg": { width: 2000, height: 2999 },
+  "10-high-view-landscape.jpg": { width: 3000, height: 2000 },
+  "11-high-view.JPG": { width: 2000, height: 3000 },
+  "12-high-view.JPG": { width: 2000, height: 3000 },
+  "13-high-view.JPG": { width: 2000, height: 3000 },
+};
 
 /**
  * Alt text per file. Describe what is actually in the photo — a screen reader
  * reads this aloud, and Google reads it to understand the image.
  *
- * TODO(Grace): replace each line with a real description of that photograph.
- * Keep them distinct; nine identical strings help no one.
+ * Add individual descriptions once the replacement photo copy is ready.
  */
-const ALT_TEXT: Record<string, string> = {
-  "high-1-watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
-  "high-2-watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
-  "high-3-watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
-  "high-5-watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
-  "high-8-watermark.jpg": "Carmen Gem, massage therapist in Bowie, Maryland",
-  "high-6-watermark-landscape.jpg":
-    "The private massage studio in Bowie, Maryland",
-  "high-9-watermark-landscape.jpg":
-    "The private massage studio in Bowie, Maryland",
-};
+const ALT_TEXT: Record<string, string> = {};
 
-const ALT_FALLBACK = "Carmen Gem, therapeutic massage in Bowie, Maryland";
+const ALT_FALLBACK = "Carmen Gem";
 
 /** First run of digits in the filename, for numeric ordering. */
 function orderOf(file: string): number {
@@ -45,11 +43,10 @@ function orderOf(file: string): number {
 }
 
 /**
- * Reads public/portfolio at build time. Adding a photo is a file drop,
- * never a code edit. Non-image files are ignored.
+ * Reads public/portfolio at build time. Non-image files are ignored.
  *
- * Orientation is read from the filename: any file with "landscape" in the
- * name is treated as 16:9, everything else as 2:3.
+ * Add new photos' dimensions to IMAGE_SIZES to reserve their actual proportions.
+ * Unlisted photos use a 2:3 portrait fallback until dimensions are supplied.
  *
  * A photo with no entry in ALT_TEXT still renders — it just gets the generic
  * fallback, so dropping in a new file never ships an image with no alt at all.
@@ -67,7 +64,7 @@ export function getPortfolio(): PortfolioItem[] {
     .filter((file) => IMAGE.test(file))
     .sort((a, b) => orderOf(a) - orderOf(b) || a.localeCompare(b))
     .map((file) => {
-      const size = /landscape/i.test(file) ? LANDSCAPE : PORTRAIT;
+      const size = IMAGE_SIZES[file] ?? { width: 2000, height: 3000 };
       return {
         // Public files use URL-safe names and remain available as direct URLs.
         src: `/portfolio/${file}`,
