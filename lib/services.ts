@@ -12,5 +12,4 @@ export const SERVICES: Service[] = [
   { id: "4-hour", duration: "4 hours", price: "$2,800" },
   { id: "6-hour", duration: "6 hours", price: "$3,500" },
   { id: "14-hour", duration: "14 hours", price: "$6,000" },
-  { id: "24-hour", duration: "24 hours", price: "$10,000" },
 ];
