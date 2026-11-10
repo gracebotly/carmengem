@@ -1,6 +1,7 @@
 import Section from "@/components/Section";
 import PortfolioGrid from "@/components/PortfolioGrid";
 import InvestmentList from "@/components/InvestmentList";
+import FlyMeToYou from "@/components/FlyMeToYou";
 import ContactForm from "@/components/ContactForm";
 import AboutIntro from "@/components/AboutIntro";
 import { BUSINESS } from "@/lib/site";
@@ -22,6 +23,7 @@ export default function Home() {
 
       <Section id="investment" title="Investment" wide>
         <InvestmentList />
+        <FlyMeToYou />
       </Section>
 
       <Section id="contact" title="Contact">
