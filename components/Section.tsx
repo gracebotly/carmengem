@@ -9,6 +9,7 @@ type SectionProps = {
   title: string;
   tone?: "light" | "dark";
   wide?: boolean;
+  compactDesktopTop?: boolean;
   children: ReactNode;
 };
 
@@ -18,6 +19,7 @@ export default function Section({
   title,
   tone = "light",
   wide = false,
+  compactDesktopTop = false,
   children,
 }: SectionProps) {
   const dark = tone === "dark";
@@ -29,7 +31,9 @@ export default function Section({
       className={`section-anchor w-full ${dark ? "bg-pitch" : "bg-shell"}`}
     >
       <motion.div
-        className="mx-auto max-w-6xl px-6 py-32 md:py-56"
+        className={`mx-auto max-w-6xl px-6 py-32 ${
+          compactDesktopTop ? "md:pt-20 md:pb-56" : "md:py-56"
+        }`}
         initial={reduceMotion ? false : { opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-100px" }}
