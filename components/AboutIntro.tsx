@@ -2,9 +2,9 @@ import Image from "next/image";
 
 export default function AboutIntro() {
   return (
-    <div className="grid gap-12 md:grid-cols-[1.05fr_0.95fr] md:items-start md:gap-16">
+    <div className="grid gap-8 md:grid-cols-[1.05fr_0.95fr] md:items-start md:gap-10">
       {/* Copy */}
-      <div className="max-w-lg space-y-6">
+      <div className="max-w-lg space-y-4">
         <p>
           I&apos;m a naturally feminine, affectionate woman who believes a
           gentleman deserves to feel appreciated, relaxed, and genuinely cared

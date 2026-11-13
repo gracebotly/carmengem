@@ -1,21 +1,11 @@
 import { BUSINESS } from "@/lib/site";
+import { inquiryDetails, type InquiryDraft } from "@/lib/inquiry";
 
 /**
  * Everything both emails need, assembled once in the route so the client's
  * copy and the owner's copy can never disagree about what was submitted.
  */
-export type InquirySummary = {
-  name: string;
-  email: string;
-  phone: string;
-  /** Session length, e.g. "2 hours". */
-  length: string;
-  /** "My studio in Bowie", or the client's "Bowie, MD". */
-  locationLabel: string;
-  atClientLocation: boolean;
-  /** Already-formatted phrase, e.g. "Friday, September 4 at 3:30 PM". */
-  preferredTime: string;
-  note: string;
+export type InquirySummary = InquiryDraft & {
   emailStatus: "ok" | "no_mx";
 };
 
@@ -45,9 +35,7 @@ function detailRows(summary: InquirySummary): [string, string][] {
     ["Name", summary.name],
     ["Email", summary.email],
     ["Phone", summary.phone],
-    ["Session", summary.length],
-    [summary.atClientLocation ? "Your location" : "Location", summary.locationLabel],
-    ["When", summary.preferredTime],
+    ...inquiryDetails(summary),
     ["Notes", summary.note || "—"],
   ];
 }
@@ -136,7 +124,7 @@ export function buildOwnerEmail(summary: InquirySummary): BuiltEmail {
   const intro = `${summary.name} just sent an inquiry through the site.`;
 
   return {
-    subject: `New inquiry — ${summary.name}, ${summary.length}, ${summary.preferredTime}`,
+    subject: `New ${summary.experience === "virtual" ? "VIRTUAL" : "IN PERSON"} inquiry — ${summary.name}, ${summary.length}, ${summary.date} at ${summary.preferredTime}`,
     text: [`New inquiry from ${summary.name}`, "", textBlock(rows), "", outroText].join("\n"),
     html: htmlShell(
       "New inquiry",

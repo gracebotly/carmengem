@@ -3,18 +3,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import {
-  DURATION_OPTIONS,
-  EMPTY_DRAFT,
-  INQUIRE_VALUE,
-  LOCATION_OPTIONS,
-  TIMING_OPTIONS,
-  HOURS,
-  MERIDIEMS,
-  MINUTES,
-  isDraftReady,
-  splitName,
-  timingPhrase,
-  type InquiryDraft,
+  DURATION_OPTIONS, EMPTY_DRAFT, VIRTUAL_DURATIONS, VIRTUAL_FORMATS,
+  SCREENING_OPTIONS, ID_NOTE, localDate, inquiryPayload, inquiryDetails,
+  isDraftReady, validateInquiry, splitName, type InquiryDraft,
 } from "@/lib/inquiry";
 import {
   LEAD_ID_KEY,
@@ -23,12 +14,11 @@ import {
   saveLead,
   suggestEmail,
 } from "@/lib/leadCapture";
-import { formatCityState, parseCityState } from "@/lib/usStates";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
 const FIELD_BASE =
-  "w-full border-b border-line bg-transparent py-2.5 text-base font-light outline-none transition-colors placeholder:text-sand focus:border-rose";
+  "w-full border-b border-line bg-transparent py-2.5 text-base font-light outline-none transition-colors placeholder:text-ink focus:border-rose";
 
 const FIELD = `${FIELD_BASE} text-ink`;
 
@@ -72,7 +62,7 @@ function SelectField({
 }: SelectFieldProps) {
   return (
     <div>
-      <label htmlFor={id} className="eyebrow text-sand">
+      <label htmlFor={id} className="eyebrow text-ink">
         {label}
         {required && <Required />}
       </label>
@@ -82,7 +72,7 @@ function SelectField({
           value={value}
           required={required}
           onChange={(event) => onChange(event.target.value)}
-          className={`${SELECT_BASE} ${value === "" ? "text-sand" : "text-ink"}`}
+          className={`${SELECT_BASE} text-ink`}
         >
           <option value="">{placeholder}</option>
           {options.map((option) => (
@@ -94,11 +84,11 @@ function SelectField({
         <ChevronDown
           size={16}
           aria-hidden="true"
-          className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-sand"
+          className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-ink"
         />
       </div>
       {hint && (
-        <p className="mt-2 text-sm font-light leading-[1.7] text-sand">{hint}</p>
+        <p className="mt-2 text-sm font-light leading-[1.7] text-ink">{hint}</p>
       )}
       {error && <p className="mt-2 text-sm text-rose">{error}</p>}
     </div>
@@ -122,7 +112,7 @@ export default function ContactForm() {
     if (stored) leadIdRef.current = stored;
   }, []);
 
-  // Email alone triggers capture. Phone is optional and joins the same row later.
+  // Preserve the existing partial-lead capture before final submission.
   useEffect(() => {
     if (status === "success") return;
     if (honeypot.length > 0) return;
@@ -157,11 +147,18 @@ export default function ContactForm() {
   }, [draft.name, draft.email, draft.phone, honeypot, status]);
 
   function update(field: keyof InquiryDraft, value: string) {
-    setDraft((prev) => ({ ...prev, [field]: value }));
+    setDraft((prev) => field === "experience"
+      ? { ...EMPTY_DRAFT, name: prev.name, email: prev.email, phone: prev.phone, experience: value as InquiryDraft["experience"] }
+      : { ...prev, [field]: value, ...(field === "screeningMethod" ? { screeningValue: "" } : {}) });
+    setErrors({});
+    setNotice("");
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (status === "submitting") return;
+    const validation = validateInquiry(draft);
+    if (Object.keys(validation).length) { setErrors(validation); return; }
     setStatus("submitting");
     setErrors({});
     setNotice("");
@@ -171,8 +168,7 @@ export default function ContactForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...draft,
-          preferredTime: timingPhrase(draft),
+          ...inquiryPayload(draft),
           leadId: leadIdRef.current,
           company: honeypot,
         }),
@@ -196,17 +192,8 @@ export default function ContactForm() {
 
   if (status === "success") {
     const firstName = draft.name.trim().split(" ")[0] || "there";
-    const locationLabel =
-      draft.locationType === "client"
-        ? draft.cityState
-        : LOCATION_OPTIONS.find((o) => o.value === draft.locationType)?.label ?? "";
-
     const summaryRows: [string, string][] = [
-      ["Session", draft.length],
-      [draft.locationType === "client" ? "Your location" : "Location", locationLabel],
-      ["When", timingPhrase(draft)],
-      ["Email", draft.email],
-      ["Phone", draft.phone],
+      ...inquiryDetails(draft), ["Email", draft.email], ["Phone", draft.phone],
     ];
 
     return (
@@ -214,7 +201,7 @@ export default function ContactForm() {
         <p className="font-display text-[26px] leading-[1.25] text-ink md:text-[32px]">
           Thank you, {firstName}.
         </p>
-        <p className="mt-5 text-base font-light leading-[1.75] text-stone">
+        <p className="mt-5 text-base font-light leading-[1.75] text-ink">
           Your inquiry has reached me. I&rsquo;ll reply personally to confirm a
           time. A copy of the details below is on its way to {draft.email}.
         </p>
@@ -225,7 +212,7 @@ export default function ContactForm() {
               key={label}
               className="flex items-baseline justify-between gap-6 border-b border-line py-3.5"
             >
-              <dt className="eyebrow shrink-0 text-sand">{label}</dt>
+              <dt className="eyebrow shrink-0 text-ink">{label}</dt>
               <dd className="text-right text-base font-light text-ink">
                 {value || "—"}
               </dd>
@@ -234,7 +221,7 @@ export default function ContactForm() {
         </dl>
 
         {draft.note && (
-          <p className="mt-6 text-sm font-light leading-[1.7] text-sand">
+          <p className="mt-6 text-sm font-light leading-[1.7] text-ink">
             Your note: {draft.note}
           </p>
         )}
@@ -257,7 +244,7 @@ export default function ContactForm() {
 
       <div className="grid grid-cols-1 gap-x-5 gap-y-7 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label htmlFor="name" className="eyebrow text-sand">
+          <label htmlFor="name" className="eyebrow text-ink">
             Name
             <Required />
           </label>
@@ -265,7 +252,7 @@ export default function ContactForm() {
           {errors.name && <p className="mt-2 text-sm text-rose">{errors.name}</p>}
         </div>
         <div>
-          <label htmlFor="email" className="eyebrow text-sand">
+          <label htmlFor="email" className="eyebrow text-ink">
             Email
             <Required />
           </label>
@@ -278,7 +265,7 @@ export default function ContactForm() {
           {errors.email && <p className="mt-2 text-sm text-rose">{errors.email}</p>}
         </div>
         <div>
-          <label htmlFor="phone" className="eyebrow text-sand">
+          <label htmlFor="phone" className="eyebrow text-ink">
             Phone
             <Required />
           </label>
@@ -288,149 +275,73 @@ export default function ContactForm() {
       </div>
 
       <div className="mt-7 space-y-7">
-        <SelectField
-          id="length"
-          label="Session length"
-          placeholder="Choose a length"
-          value={draft.length}
-          onChange={(value) => update("length", value)}
-          required
-          options={DURATION_OPTIONS.map((option) => ({
-            value: option.value,
-            label: option.label,
-          }))}
-          hint={
-            draft.length === INQUIRE_VALUE
-              ? "Tell me what you have in mind below and I’ll come back to you with pricing."
-              : undefined
-          }
-          error={errors.length}
-        />
-
-        <SelectField
-          id="locationType"
-          label="Where does your session begin?"
-          placeholder="Choose a location"
-          value={draft.locationType}
-          onChange={(value) => update("locationType", value)}
-          required
-          options={LOCATION_OPTIONS.map((option) => ({
-            value: option.value,
-            label: option.label,
-          }))}
-          error={errors.locationType}
-        />
-
-        {draft.locationType === "client" && (
-          <div>
-            <label htmlFor="cityState" className="eyebrow text-sand">
-              City and state
-              <Required />
-            </label>
-            <input
-              id="cityState"
-              type="text"
-              required
-              autoComplete="address-level2"
-              maxLength={80}
-              placeholder="Bowie, MD"
-              className={FIELD}
-              value={draft.cityState}
-              onChange={(e) => update("cityState", e.target.value)}
-              onBlur={(e) => {
-                const parsed = parseCityState(e.target.value);
-                if (parsed) update("cityState", formatCityState(parsed));
-              }}
-            />
-            {errors.cityState && (
-              <p className="mt-2 text-sm text-rose">{errors.cityState}</p>
-            )}
-          </div>
-        )}
-
-        <SelectField
-          id="timing"
-          label="When works?"
-          placeholder="Choose when"
-          value={draft.timing}
-          onChange={(value) => update("timing", value)}
-          required
-          options={TIMING_OPTIONS.map((option) => ({
-            value: option.value,
-            label: option.label,
-          }))}
-          error={errors.preferredTime}
-        />
-
-        {draft.timing === "scheduled" && (
-          <div className="space-y-7">
-            <div className="sm:max-w-xs">
-              <label htmlFor="date" className="eyebrow text-sand">
-                Date
-                <Required />
+        <fieldset>
+          <legend className="eyebrow text-ink">What type of experience are you interested in?<Required /></legend>
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            {([ ["virtual", "Virtual"], ["in-person", "In person"] ] as const).map(([value, label]) => (
+              <label key={value} className="relative cursor-pointer">
+                <input type="radio" name="experience" value={value} required checked={draft.experience === value} onChange={() => update("experience", value)} className="peer sr-only" />
+                <span className="eyebrow block border border-line px-3 py-4 text-center text-ink transition-colors peer-checked:border-rose peer-checked:bg-rose/10 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-rose">{label}</span>
               </label>
-              <input
-                id="date"
-                type="date"
-                required
-                className={FIELD}
-                value={draft.date}
-                onChange={(e) => update("date", e.target.value)}
-              />
-            </div>
-
-            {/* Three short lists read faster than one long one. */}
-            <div className="grid max-w-xs grid-cols-3 gap-x-3">
-              <SelectField
-                id="hour"
-                label="Hour"
-                placeholder="--"
-                value={draft.hour}
-                onChange={(value) => update("hour", value)}
-                required
-                options={HOURS.map((hour) => ({ value: hour, label: hour }))}
-              />
-              <SelectField
-                id="minute"
-                label="Min"
-                placeholder="--"
-                value={draft.minute}
-                onChange={(value) => update("minute", value)}
-                required
-                options={MINUTES.map((minute) => ({
-                  value: minute,
-                  label: `:${minute}`,
-                }))}
-              />
-              <SelectField
-                id="meridiem"
-                label="AM/PM"
-                placeholder="--"
-                value={draft.meridiem}
-                onChange={(value) => update("meridiem", value)}
-                required
-                options={MERIDIEMS.map((meridiem) => ({
-                  value: meridiem,
-                  label: meridiem,
-                }))}
-              />
-            </div>
+            ))}
           </div>
-        )}
+          {errors.experience && <p role="alert" className="mt-2 text-sm text-rose">{errors.experience}</p>}
+        </fieldset>
 
-        <div>
-          <label htmlFor="note" className="eyebrow text-sand">
-            Tell me about yourself{" "}
-            <span className="normal-case tracking-normal">(optional)</span>
-          </label>
-          <textarea
-            id="note"
-            rows={2}
-            className={`${FIELD} resize-none`}
-            value={draft.note}
-            onChange={(e) => update("note", e.target.value)}
-          />
-        </div>
+        {draft.experience === "virtual" && <>
+          <SelectField id="length" label="Session length" placeholder="Choose a length" value={draft.length} onChange={value => update("length", value)} required options={VIRTUAL_DURATIONS.map(value => ({ value, label: value }))} error={errors.length} />
+          <fieldset>
+            <legend className="eyebrow text-ink">Preferred virtual format<Required /></legend>
+            <div className="mt-3 space-y-3">
+              {VIRTUAL_FORMATS.map(value => <label key={value} className="flex cursor-pointer items-center gap-3 text-base font-light text-ink">
+                <input type="radio" name="virtualFormat" value={value} required checked={draft.virtualFormat === value} onChange={() => update("virtualFormat", value)} className="accent-rose" />{value}
+              </label>)}
+            </div>
+            {errors.virtualFormat && <p role="alert" className="mt-2 text-sm text-rose">{errors.virtualFormat}</p>}
+          </fieldset>
+        </>}
+
+        {draft.experience === "in-person" && <fieldset>
+          <legend className="eyebrow text-ink">Choose one screening method<Required /></legend>
+          <div className="mt-3 space-y-3">
+            {SCREENING_OPTIONS.map(({ value, label }) => <label key={value} className="flex cursor-pointer items-center gap-3 text-base font-light text-ink">
+              <input type="radio" name="screeningMethod" value={value} required checked={draft.screeningMethod === value} onChange={() => update("screeningMethod", value)} className="accent-rose" />{label}
+            </label>)}
+          </div>
+          {errors.screeningMethod && <p role="alert" className="mt-2 text-sm text-rose">{errors.screeningMethod}</p>}
+          {draft.screeningMethod === "government-id" && <p className="mt-4 text-sm font-light leading-[1.7] text-ink">{ID_NOTE}</p>}
+          {["linkedin", "website", "professional-email"].includes(draft.screeningMethod) && <div className="mt-5">
+            <label htmlFor="screeningValue" className="eyebrow text-ink">{draft.screeningMethod === "linkedin" ? "LinkedIn profile" : draft.screeningMethod === "website" ? "Professional website or profile" : "Professional email address"}<Required /></label>
+            <input id="screeningValue" type={draft.screeningMethod === "professional-email" ? "email" : "url"} required maxLength={2000} placeholder={draft.screeningMethod === "linkedin" ? "Link to your LinkedIn profile" : draft.screeningMethod === "website" ? "Enter your professional website or profile URL" : "name@company.com"} className={FIELD} value={draft.screeningValue} onChange={e => update("screeningValue", e.target.value)} />
+            {errors.screeningValue && <p role="alert" className="mt-2 text-sm text-rose">{errors.screeningValue}</p>}
+          </div>}
+        </fieldset>}
+
+        {draft.experience && <>
+          <div>
+            <label htmlFor="date" className="eyebrow text-ink">Preferred date<Required /></label>
+            <input id="date" type="date" required min={localDate()} className={FIELD} value={draft.date} onClick={e => { try { e.currentTarget.showPicker?.(); } catch { /* Native picker remains available via keyboard. */ } }} onChange={e => update("date", e.target.value)} />
+            {errors.date && <p role="alert" className="mt-2 text-sm text-rose">{errors.date}</p>}
+          </div>
+          {draft.experience === "in-person" && <>
+            <div>
+              <label htmlFor="cityState" className="eyebrow text-ink">City/state of date<Required /></label>
+              <input id="cityState" type="text" required maxLength={200} autoComplete="address-level2" placeholder="Enter your city and state" className={FIELD} value={draft.cityState} onChange={e => update("cityState", e.target.value)} />
+              {errors.cityState && <p role="alert" className="mt-2 text-sm text-rose">{errors.cityState}</p>}
+            </div>
+            <SelectField id="length" label="Length of date" placeholder="Choose a length" value={draft.length} onChange={value => update("length", value)} required options={DURATION_OPTIONS.map(value => ({ value, label: value }))} error={errors.length} />
+          </>}
+          <div>
+            <label htmlFor="preferredTime" className="eyebrow text-ink">{draft.experience === "virtual" ? "Preferred time" : "Approximate time range of date"}<Required /></label>
+            <input id="preferredTime" type={draft.experience === "virtual" ? "time" : "text"} required maxLength={200} placeholder={draft.experience === "in-person" ? "e.g. 5:00 PM – 7:00 PM" : undefined} className={FIELD} value={draft.preferredTime} onChange={e => update("preferredTime", e.target.value)} />
+            {errors.preferredTime && <p role="alert" className="mt-2 text-sm text-rose">{errors.preferredTime}</p>}
+          </div>
+          <div>
+            <label htmlFor="note" className="eyebrow text-ink">Additional details <span className="normal-case tracking-normal">(optional)</span></label>
+            <textarea id="note" rows={2} maxLength={4000} placeholder="Anything else you'd like me to know?" className={`${FIELD} resize-none`} value={draft.note} onChange={e => update("note", e.target.value)} />
+            {errors.note && <p role="alert" className="mt-2 text-sm text-rose">{errors.note}</p>}
+          </div>
+        </>}
       </div>
 
       {notice && <p className="mt-6 text-sm text-rose">{notice}</p>}

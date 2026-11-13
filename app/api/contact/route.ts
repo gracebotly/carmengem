@@ -1,15 +1,11 @@
 import { promises as dns } from "node:dns";
 import { Resend } from "resend";
 import { buildClientEmail, buildOwnerEmail, type InquirySummary } from "@/lib/emails";
-import { DURATION_VALUES, splitName } from "@/lib/inquiry";
-import { isPhoneValid } from "@/lib/leadCapture";
+import { EMPTY_DRAFT, inquiryPayload, splitName, validateInquiry, type InquiryDraft } from "@/lib/inquiry";
 import { BUSINESS } from "@/lib/site";
 import { getServiceClient } from "@/lib/supabase";
-import { formatCityState, parseCityState, type CityState } from "@/lib/usStates";
 
 export const runtime = "nodejs";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function str(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -20,6 +16,7 @@ export async function POST(request: Request) {
 
   try {
     body = await request.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Invalid request");
   } catch {
     return Response.json({ error: "Invalid request." }, { status: 400 });
   }
@@ -28,58 +25,17 @@ export async function POST(request: Request) {
     return Response.json({ ok: true });
   }
 
-  const name = str(body.name).replace(/\s+/g, " ");
-  const { firstName, lastName } = splitName(name);
-  const leadId = str(body.leadId);
-  const email = str(body.email);
-  const phone = str(body.phone);
-  const note = str(body.note);
-  const length = str(body.length);
-  const locationType = str(body.locationType);
-  const cityState = str(body.cityState);
-  const preferredTime = str(body.preferredTime);
-
-  const errors: Record<string, string> = {};
-
-  if (name.length < 2) errors.name = "Enter your name.";
-  if (phone === "") {
-    errors.phone = "Enter your phone number.";
-  } else if (!isPhoneValid(phone)) {
-    errors.phone = "Enter a complete 10-digit US phone number.";
-  }
-  if (!EMAIL_RE.test(email)) errors.email = "Enter a valid email address.";
-  if (length === "") {
-    errors.length = "Choose a session length.";
-  } else if (!DURATION_VALUES.includes(length)) {
-    errors.length = "Choose a session length.";
-  }
-  if (locationType !== "studio" && locationType !== "client") {
-    errors.locationType = "Choose where your session begins.";
-  }
-  let location: CityState | null = null;
-  if (locationType === "client") {
-    location = parseCityState(cityState);
-    if (!location) {
-      errors.cityState = "Enter the city and state you're in, e.g. Bowie, MD.";
-    }
-  }
-  if (preferredTime === "") errors.preferredTime = "Let me know when.";
-  if (
-    name.length > 200 ||
-    email.length > 200 ||
-    phone.length > 40 ||
-    preferredTime.length > 200 ||
-    note.length > 4000
-  ) {
-    errors.note = "That is longer than I can accept.";
-  }
-
+  const values = Object.fromEntries(Object.keys(EMPTY_DRAFT).map(key => [key, str(body[key])])) as InquiryDraft;
+  const draft = { ...EMPTY_DRAFT, ...inquiryPayload(values) };
+  const errors = validateInquiry(draft);
   if (Object.keys(errors).length > 0) {
     return Response.json({ errors }, { status: 400 });
   }
-
-  // Non-null past validation whenever locationType === "client".
-  const locationLabel = location ? formatCityState(location) : "studio";
+  const name = draft.name.replace(/\s+/g, " ");
+  const { firstName, lastName } = splitName(name);
+  const leadId = str(body.leadId);
+  const { email, phone, note, length } = draft;
+  const preferredTime = `${draft.date} at ${draft.preferredTime}`;
 
   // Warn-only. A domain with no mail server is recorded, never rejected.
   let emailStatus: "ok" | "no_mx" = "ok";
@@ -98,11 +54,16 @@ export async function POST(request: Request) {
     email,
     phone,
     service: length,
-    location_type: locationType,
+    location_type: draft.experience === "in-person" ? "client" : null,
+    experience: draft.experience,
+    virtual_format: draft.virtualFormat || null,
+    screening_method: draft.screeningMethod || null,
+    screening_value: draft.screeningValue || null,
+    preferred_date: draft.date,
     // `zip` is retained in the table but no longer collected. Written null so a
     // promoted partial row can never carry a stale value.
     zip: null,
-    city: location ? locationLabel : null,
+    city: draft.cityState || null,
     preferred_time: preferredTime,
     message: note || "(no note)",
     status: "complete",
@@ -138,17 +99,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const summary: InquirySummary = {
-    name,
-    email,
-    phone,
-    length,
-    locationLabel,
-    atClientLocation: locationType === "client",
-    preferredTime,
-    note,
-    emailStatus,
-  };
+  const summary: InquirySummary = { ...draft, name, emailStatus };
 
   // The inquiry is already saved. Email problems are logged, never surfaced to
   // the visitor and never allowed to fail the request — but they must not be
