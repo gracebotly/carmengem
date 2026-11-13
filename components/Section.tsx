@@ -10,6 +10,7 @@ type SectionProps = {
   tone?: "light" | "dark";
   wide?: boolean;
   compactDesktopTop?: boolean;
+  compactTitleGap?: boolean;
   children: ReactNode;
 };
 
@@ -20,6 +21,7 @@ export default function Section({
   tone = "light",
   wide = false,
   compactDesktopTop = false,
+  compactTitleGap = false,
   children,
 }: SectionProps) {
   const dark = tone === "dark";
@@ -51,7 +53,7 @@ export default function Section({
           {title}
         </h2>
         <div
-          className={`mt-10 text-base font-light leading-[1.75] ${
+          className={`${compactTitleGap ? "mt-6" : "mt-10"} text-base font-light leading-[1.75] ${
             wide ? "" : "max-w-lg"
           } ${dark ? "text-sand" : "text-stone"}`}
         >
