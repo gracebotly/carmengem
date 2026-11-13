@@ -1,142 +1,98 @@
 import { isEmailValid, isPhoneValid } from "@/lib/leadCapture";
-import { parseCityState } from "@/lib/usStates";
 
-export type LocationType = "studio" | "client";
-export type Timing = "asap" | "scheduled";
-export type Meridiem = "AM" | "PM";
+export const DURATION_OPTIONS = ["1 hour", "90 minutes", "2 hours", "3 hours", "4 hours", "6 hours", "14 hours"];
+export const VIRTUAL_DURATIONS = ["15 minutes", "30 minutes", "60 minutes"];
+export const VIRTUAL_FORMATS = ["Video Call", "Voice Call", "Private Chat"];
+export const SCREENING_OPTIONS = [
+  { value: "government-id", label: "Government ID" },
+  { value: "linkedin", label: "Employment Verification via LinkedIn" },
+  { value: "website", label: "Professional Website or Wikipedia Page" },
+  { value: "professional-email", label: "Email from Professional Email" },
+];
+export const ID_NOTE = "Once your inquiry has been received, you will receive an email with instructions for submitting your identification photos. No documents are required at this stage.";
 
 export type InquiryDraft = {
-  /** One field. Split into first/last only when it is stored. */
   name: string;
-  length: string;
-  locationType: LocationType | "";
-  /** Free text, normalised to "Bowie, MD". Required only for client locations. */
-  cityState: string;
-  timing: Timing | "";
-  date: string;
-  /** Clock hour, "1"–"12". */
-  hour: string;
-  /** Minutes, "00" or "30". */
-  minute: string;
-  meridiem: Meridiem | "";
-  note: string;
-  phone: string;
   email: string;
+  phone: string;
+  experience: "" | "virtual" | "in-person";
+  length: string;
+  virtualFormat: string;
+  screeningMethod: string;
+  screeningValue: string;
+  date: string;
+  cityState: string;
+  preferredTime: string;
+  note: string;
 };
-
 export const EMPTY_DRAFT: InquiryDraft = {
-  name: "",
-  length: "",
-  locationType: "",
-  cityState: "",
-  timing: "",
-  date: "",
-  hour: "",
-  minute: "",
-  meridiem: "",
-  note: "",
-  phone: "",
-  email: "",
+  name: "", email: "", phone: "", experience: "", length: "", virtualFormat: "",
+  screeningMethod: "", screeningValue: "", date: "", cityState: "", preferredTime: "", note: "",
 };
 
-export type DurationOption = {
-  id: string;
-  label: string;
-  /** Stored in inquiries.service and shown in the notification email. */
-  value: string;
-};
-
-/**
- * Owned by the contact form, deliberately not derived from SERVICES.
- * Durations offered and services priced are separate concerns — keep them separate.
- */
-export const DURATION_OPTIONS: DurationOption[] = [
-  { id: "1-hour", label: "1 hour", value: "1 hour" },
-  { id: "90-min", label: "90 minutes", value: "90 minutes" },
-  { id: "2-hour", label: "2 hours", value: "2 hours" },
-  { id: "3-hour", label: "3 hours", value: "3 hours" },
-  { id: "4-hour", label: "4 hours", value: "4 hours" },
-  { id: "inquire", label: "Inquire", value: "Inquire — more than 4 hours" },
-];
-
-export const INQUIRE_VALUE = "Inquire — more than 4 hours";
-
-export const DURATION_VALUES: string[] = DURATION_OPTIONS.map((o) => o.value);
-
-export const LOCATION_OPTIONS: { value: LocationType; label: string }[] = [
-  { value: "studio", label: "My studio in Bowie" },
-  { value: "client", label: "Your location" },
-];
-
-export const TIMING_OPTIONS: { value: Timing; label: string }[] = [
-  { value: "asap", label: "As soon as you have an opening" },
-  { value: "scheduled", label: "Pick a date and time" },
-];
-
-/**
- * The three parts of the time picker. Any hour of the clock is offered — a
- * request outside your hours is a conversation, not a form error.
- */
-export const HOURS: string[] = [
-  "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
-];
-
-export const MINUTES: string[] = ["00", "30"];
-
-export const MERIDIEMS: Meridiem[] = ["AM", "PM"];
-
-/**
- * Human-readable timing, stored in inquiries.preferred_time and used in the email subject.
- */
-export function timingPhrase(draft: InquiryDraft): string {
-  if (draft.timing === "asap") return "As soon as you have an opening";
-  if (draft.timing !== "scheduled") return "";
-  if (!draft.date || !draft.hour || !draft.minute || !draft.meridiem) return "";
-
-  const [y, m, d] = draft.date.split("-").map(Number);
-  const when = new Date(y, m - 1, d);
-  const pretty = when.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-
-  return `${pretty} at ${draft.hour}:${draft.minute} ${draft.meridiem}`;
+export function localDate(date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-/**
- * Splits one typed name for the first_name / last_name columns. The first word
- * is the first name, everything after it is the last name. A single word leaves
- * lastName empty — accepted by design, the form does not demand a surname.
- */
+/** Whitelist active fields at both boundaries; stale hidden data is discarded. */
+export function inquiryPayload(draft: InquiryDraft) {
+  const common = {
+    name: draft.name, email: draft.email, phone: draft.phone, experience: draft.experience,
+    length: draft.length, date: draft.date, preferredTime: draft.preferredTime, note: draft.note,
+  };
+  return draft.experience === "virtual"
+    ? { ...common, virtualFormat: draft.virtualFormat }
+    : { ...common, cityState: draft.cityState, screeningMethod: draft.screeningMethod,
+        ...(draft.screeningMethod !== "government-id" ? { screeningValue: draft.screeningValue } : {}) };
+}
+
+function isWebUrl(value: string): boolean {
+  try { return ["https:", "http:"].includes(new URL(value).protocol); } catch { return false; }
+}
+
+export function validateInquiry(draft: InquiryDraft, today = localDate()): Record<string, string> {
+  const errors: Record<string, string> = {};
+  if (draft.name.trim().length < 2 || draft.name.length > 200) errors.name = "Enter your name.";
+  if (!isEmailValid(draft.email)) errors.email = "Enter a valid email address.";
+  if (!isPhoneValid(draft.phone)) errors.phone = "Enter a complete 10-digit US phone number.";
+  if (!["virtual", "in-person"].includes(draft.experience)) errors.experience = "Choose an experience.";
+  const durations = draft.experience === "virtual" ? VIRTUAL_DURATIONS : DURATION_OPTIONS;
+  if (!durations.includes(draft.length)) errors.length = "Choose a length.";
+  const parsed = new Date(`${draft.date}T12:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.date) || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== draft.date || draft.date < today) errors.date = "Choose today or a future date.";
+  if (!draft.preferredTime.trim() || draft.preferredTime.length > 200) errors.preferredTime = "Enter your preferred time.";
+  if (draft.experience === "virtual") {
+    if (!VIRTUAL_FORMATS.includes(draft.virtualFormat)) errors.virtualFormat = "Choose a virtual format.";
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(draft.preferredTime)) errors.preferredTime = "Enter a valid time.";
+  } else if (draft.experience === "in-person") {
+    if (!draft.cityState.trim() || draft.cityState.length > 200) errors.cityState = "Enter your city and state.";
+    if (!SCREENING_OPTIONS.some(option => option.value === draft.screeningMethod)) errors.screeningMethod = "Choose a screening method.";
+    if (["linkedin", "website"].includes(draft.screeningMethod) && (!isWebUrl(draft.screeningValue) || draft.screeningValue.length > 2000)) errors.screeningValue = "Enter a valid website URL, including https://.";
+    if (draft.screeningMethod === "professional-email" && !isEmailValid(draft.screeningValue)) errors.screeningValue = "Enter a valid professional email address.";
+  }
+  if (draft.note.length > 4000) errors.note = "Please keep additional details under 4,000 characters.";
+  return errors;
+}
+
+export function isDraftReady(draft: InquiryDraft): boolean {
+  return Object.keys(validateInquiry(draft)).length === 0;
+}
+
+export function inquiryDetails(draft: InquiryDraft): [string, string][] {
+  return [
+    ["Experience", draft.experience === "virtual" ? "VIRTUAL" : "IN PERSON"],
+    ["Session length", draft.length],
+    ...(draft.experience === "virtual" ? [["Virtual format", draft.virtualFormat] as [string, string]] : [
+      ["Screening method", SCREENING_OPTIONS.find(option => option.value === draft.screeningMethod)?.label ?? ""] as [string, string],
+      ...(draft.screeningMethod !== "government-id" ? [["Screening details", draft.screeningValue] as [string, string]] : []),
+      ["City/state of date", draft.cityState] as [string, string],
+    ]),
+    ["Preferred date", draft.date], ["Preferred time", draft.preferredTime],
+  ];
+}
+
 export function splitName(full: string): { firstName: string; lastName: string } {
   const cleaned = full.trim().replace(/\s+/g, " ");
   const space = cleaned.indexOf(" ");
-  if (space === -1) return { firstName: cleaned, lastName: "" };
-  return {
-    firstName: cleaned.slice(0, space),
-    lastName: cleaned.slice(space + 1),
-  };
-}
-
-export function isCityStateValid(value: string): boolean {
-  return parseCityState(value) !== null;
-}
-
-/** Client-side gate for enabling the submit button. */
-export function isDraftReady(draft: InquiryDraft): boolean {
-  if (draft.name.trim().length < 2) return false;
-  if (draft.length === "") return false;
-  if (draft.locationType === "") return false;
-  if (draft.locationType === "client" && !isCityStateValid(draft.cityState))
-    return false;
-  if (draft.timing === "") return false;
-  if (draft.timing === "scheduled") {
-    if (!draft.date || !draft.hour || !draft.minute || !draft.meridiem) {
-      return false;
-    }
-  }
-  if (!isEmailValid(draft.email)) return false;
-  if (!isPhoneValid(draft.phone)) return false;
-  return true;
+  return space === -1 ? { firstName: cleaned, lastName: "" } : { firstName: cleaned.slice(0, space), lastName: cleaned.slice(space + 1) };
 }
