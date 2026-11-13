@@ -2,11 +2,11 @@ import Image from "next/image";
 
 export default function AboutIntro() {
   return (
-    <div className="grid gap-8 md:grid-cols-[1.05fr_0.95fr] md:items-start md:gap-10">
+    <div className="grid gap-12 md:grid-cols-[1.05fr_0.95fr] md:items-start md:gap-16">
       {/* Copy */}
       <div className="max-w-lg space-y-4">
         <p>
-          I&rsquo;m a naturally feminine, affectionate woman who believes a
+          I&apos;m a naturally feminine, affectionate woman who believes a
           gentleman deserves to feel appreciated, relaxed, and genuinely cared
           for. I enjoy the finer things in life, but what I cherish most is
           making a man feel special through warm companionship, thoughtful
@@ -15,8 +15,8 @@ export default function AboutIntro() {
         <p>
           I understand that a man carries responsibilities and pressures he
           rarely gets to set aside. The right kind of touch can quiet a mind
-          that hasn&rsquo;t stopped running. That&rsquo;s the experience I want
-          to create for every gentleman who walks through my door.
+          that hasn&apos;t stopped running. That&apos;s the experience I want to
+          create for every gentleman who walks through my door.
         </p>
         <p>
           My space is designed for you to slow down, let go, and simply be cared
