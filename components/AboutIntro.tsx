@@ -6,22 +6,23 @@ export default function AboutIntro() {
       {/* Copy */}
       <div className="max-w-lg space-y-6">
         <p>
-          The right kind of touch can quiet a mind that hasn&rsquo;t stopped
-          running. That&rsquo;s the experience I want to create for every person
-          who walks through my door. My space is designed for you to slow down,
-          let go, and simply be cared for without feeling rushed or having to
-          explain what you need. Every session is personal, attentive, and
-          guided by how your body feels that day, giving you the time and space
-          to truly relax, reset, and recharge.
+          I&apos;m a naturally feminine, affectionate woman who believes a
+          gentleman deserves to feel appreciated, relaxed, and genuinely cared
+          for. I enjoy the finer things in life, but what I cherish most is
+          making a man feel special through warm companionship, thoughtful
+          attention, and a gentle, personal touch.
         </p>
         <p>
-          I practice from a private studio nestled in a quiet, established
-          neighborhood in Bowie. The residential setting is intentional,
-          offering a warm, peaceful, and discreet environment where you can feel
-          comfortable from the moment you arrive. You&rsquo;ll have driveway
-          parking, a private entrance, and a thoughtfully prepared space
-          dedicated to your comfort, privacy, and relaxation. Once you step
-          inside, the rest of the world can wait.
+          I understand that a man carries responsibilities and pressures he
+          rarely gets to set aside. The right kind of touch can quiet a mind
+          that hasn&apos;t stopped running. That&apos;s the experience I want to
+          create for every gentleman who walks through my door.
+        </p>
+        <p>
+          My space is designed for you to slow down, let go, and simply be cared
+          for without feeling rushed or having to explain what you need. Every
+          session is personal, attentive, and guided by how your body feels that
+          day, giving you the time and space to truly relax, reset, and recharge.
         </p>
       </div>
 
