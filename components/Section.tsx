@@ -9,6 +9,7 @@ type SectionProps = {
   title: string;
   tone?: "light" | "dark";
   wide?: boolean;
+  compact?: boolean;
   children: ReactNode;
 };
 
@@ -18,6 +19,7 @@ export default function Section({
   title,
   tone = "light",
   wide = false,
+  compact = false,
   children,
 }: SectionProps) {
   const dark = tone === "dark";
@@ -29,7 +31,7 @@ export default function Section({
       className={`section-anchor w-full ${dark ? "bg-pitch" : "bg-shell"}`}
     >
       <motion.div
-        className="mx-auto max-w-6xl px-6 py-32 md:py-56"
+        className={`mx-auto max-w-6xl px-6 ${compact ? "py-16 md:py-24" : "py-32 md:py-56"}`}
         initial={reduceMotion ? false : { opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-100px" }}
@@ -47,7 +49,7 @@ export default function Section({
           {title}
         </h2>
         <div
-          className={`mt-10 text-base font-light leading-[1.75] ${
+          className={`${compact ? "mt-6" : "mt-10"} text-base font-light leading-[1.75] ${
             wide ? "" : "max-w-lg"
           } ${dark ? "text-sand" : "text-stone"}`}
         >
