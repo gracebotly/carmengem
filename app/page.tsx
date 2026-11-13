@@ -13,7 +13,7 @@ export default function Home() {
         {BUSINESS.name} — {BUSINESS.tagline}
       </h1>
 
-      <Section id="about" eyebrow="Who I am" title="About" wide compactDesktopTop>
+      <Section id="about" title="About" wide compactDesktopTop>
         <AboutIntro />
       </Section>
 
