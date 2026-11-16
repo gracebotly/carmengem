@@ -9,7 +9,7 @@ import {
   OG_IMAGE_HEIGHT,
   OG_IMAGE_WIDTH,
   SITE_URL,
-  localBusinessJsonLd,
+  personJsonLd,
 } from "@/lib/site";
 
 const bodoni = Bodoni_Moda({
@@ -24,7 +24,7 @@ const jost = Jost({
   display: "swap",
 });
 
-const SITE_TITLE = `${BUSINESS.name} — ${BUSINESS.tagline}`;
+const SITE_TITLE = "Carmen Gem | Washington DC Luxury Escort & Companion";
 
 export const metadata: Metadata = {
   // Makes every relative URL below resolve against the real origin.
@@ -35,8 +35,7 @@ export const metadata: Metadata = {
   },
   description: BUSINESS.description,
   applicationName: BUSINESS.name,
-  // Tells Google which URL is the real one, so www and apex stop competing.
-  alternates: { canonical: "/" },
+  // Canonicals are defined per page so each indexable route has its own URL.
   openGraph: {
     type: "website",
     siteName: BUSINESS.name,
@@ -49,7 +48,7 @@ export const metadata: Metadata = {
         url: OG_IMAGE,
         width: OG_IMAGE_WIDTH,
         height: OG_IMAGE_HEIGHT,
-        alt: SITE_TITLE,
+        alt: BUSINESS.name,
       },
     ],
   },
@@ -85,7 +84,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(localBusinessJsonLd()),
+            __html: JSON.stringify(personJsonLd()).replace(/</g, "\\u003c"),
           }}
         />
         <Nav />

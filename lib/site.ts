@@ -1,9 +1,8 @@
 /**
  * Single source of truth for the site's identity.
  *
- * The name, phone, and locality here must match the Google Business Profile
- * character for character — inconsistent "NAP" data across the web is one of
- * the few things that measurably suppresses local rankings.
+ * Keep Carmen's identity and actual studio locality accurate. Service areas
+ * describe where appointments are offered, not where the studio is located.
  *
  * Any field left as "" is omitted from the structured data rather than
  * published empty. Never put a placeholder value in this file.
@@ -31,16 +30,16 @@ export const OG_IMAGE_HEIGHT = 2000;
 
 export const BUSINESS = {
   name: "Carmen Gem",
-  tagline: "Therapeutic Massage in Bowie, Maryland",
+  tagline: "Washington DC Luxury Escort & High-End Companion",
   description:
-    "Therapeutic massage by appointment from a private studio in Bowie, Maryland. Serving Bowie, Crofton, Upper Marlboro and Prince George's County.",
+    "Meet Carmen Gem, a luxury escort and high-end companion serving Washington, DC and Tysons Corner, VA. Warm, discreet, unhurried time with a personal touch.",
 
   // TODO(Grace): the number clients should call or text. Format "+1-301-555-0142".
   phone: "",
   email: "carmengem@protonmail.com",
 
-  // Street address is intentionally blank — this is a home studio. Locality,
-  // region and zip are enough for local relevance without publishing where you live.
+  // Street address is intentionally blank — this is a home studio.
+  // Keep the actual locality here; do not publish the private residential address.
   streetAddress: "",
   city: "Bowie",
   region: "MD",
@@ -51,11 +50,12 @@ export const BUSINESS = {
   priceRange: "$$$",
 
   areaServed: [
-    "Bowie, MD",
-    "Crofton, MD",
-    "Upper Marlboro, MD",
-    "Mitchellville, MD",
-    "Prince George's County, MD",
+    "Washington, DC",
+    "Tysons Corner, VA",
+    "McLean, VA",
+    "Arlington, VA",
+    "Bethesda, MD",
+    "Northern Virginia",
   ],
 
   // TODO(Grace): real hours. Example:
@@ -72,46 +72,22 @@ export const BUSINESS = {
 };
 
 /**
- * LocalBusiness structured data. Empty fields are dropped rather than emitted.
- * Validate the result at https://search.google.com/test/rich-results after deploy.
+ * Person identity structured data. Studio address and business-only properties
+ * are deliberately omitted. Only configured, authentic profile links are used.
  */
-export function localBusinessJsonLd(): Record<string, unknown> {
-  const address: Record<string, string> = {
-    "@type": "PostalAddress",
-    addressLocality: BUSINESS.city,
-    addressRegion: BUSINESS.region,
-    addressCountry: BUSINESS.country,
-  };
-  if (BUSINESS.streetAddress) address.streetAddress = BUSINESS.streetAddress;
-  if (BUSINESS.postalCode) address.postalCode = BUSINESS.postalCode;
-
+export function personJsonLd(): Record<string, unknown> {
   const data: Record<string, unknown> = {
     "@context": "https://schema.org",
-    "@type": "HealthAndBeautyBusiness",
-    "@id": `${SITE_URL}/#business`,
+    "@type": "Person",
+    "@id": `${SITE_URL}/#person`,
     name: BUSINESS.name,
     description: BUSINESS.description,
     url: SITE_URL,
     image: `${SITE_URL}${OG_IMAGE}`,
-    address,
-    areaServed: BUSINESS.areaServed.map((name) => ({
-      "@type": "Place",
-      name,
-    })),
-    priceRange: BUSINESS.priceRange,
   };
 
   if (BUSINESS.phone) data.telephone = BUSINESS.phone;
   if (BUSINESS.email) data.email = BUSINESS.email;
   if (BUSINESS.sameAs.length > 0) data.sameAs = BUSINESS.sameAs;
-  if (BUSINESS.openingHours.length > 0) {
-    data.openingHoursSpecification = BUSINESS.openingHours.map((slot) => ({
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: slot.days,
-      opens: slot.opens,
-      closes: slot.closes,
-    }));
-  }
-
   return data;
 }
