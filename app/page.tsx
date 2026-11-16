@@ -4,13 +4,15 @@ import InvestmentList from "@/components/InvestmentList";
 import FlyMeToYou from "@/components/FlyMeToYou";
 import ContactForm from "@/components/ContactForm";
 import AboutIntro from "@/components/AboutIntro";
-import { BUSINESS } from "@/lib/site";
+import { SITE_URL } from "@/lib/site";
 
 export default function Home() {
   return (
     <main className="flex-1">
+      {/* React hoists this into <head>, preserving the root URL's trailing slash. */}
+      <link rel="canonical" href={`${SITE_URL}/`} />
       <h1 className="sr-only">
-        {BUSINESS.name} — {BUSINESS.tagline}
+        Carmen Gem — Washington DC Luxury Escort &amp; High-End Companion
       </h1>
 
       <Section

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function AboutIntro() {
   return (
@@ -23,6 +24,19 @@ export default function AboutIntro() {
           for without feeling rushed or having to explain what you need. Every
           session is personal, attentive, and guided by how your body feels that
           day, giving you the time and space to truly relax, reset, and recharge.
+        </p>
+        <p>
+          For gentlemen who prefer the comfort of their own space, I also travel
+          for private appointments in Washington, DC and{" "}
+          <Link
+            href="/tysons-corner"
+            className="border-b border-rose transition-colors hover:text-rose"
+          >
+            Tysons Corner
+          </Link>
+          . Wherever we meet, you can expect the same feminine warmth, thoughtful
+          attention, and unhurried experience that make our time together feel
+          personal.
         </p>
       </div>
 

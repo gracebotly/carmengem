@@ -29,7 +29,7 @@ export default function Nav() {
     >
       <nav className="relative z-10 mx-auto flex h-16 max-w-6xl items-center justify-between px-6 md:h-[72px]">
         <a
-          href="#about"
+          href="/#about"
           className={`font-body text-lg tracking-[0.08em] transition-colors duration-500 ${
             dark ? "text-shell" : "text-ink"
           }`}
@@ -41,7 +41,7 @@ export default function Nav() {
           {SECTIONS.map(({ id, label }) => (
             <li key={id}>
               <a
-                href={`#${id}`}
+                href={`/#${id}`}
                 className={`eyebrow transition-colors duration-300 ${
                   active === id
                     ? "text-rose"
@@ -79,7 +79,7 @@ export default function Nav() {
             {SECTIONS.map(({ id, label }) => (
               <li key={id}>
                 <a
-                  href={`#${id}`}
+                  href={`/#${id}`}
                   onClick={() => setOpen(false)}
                   className={`font-display text-3xl [font-size:32px] transition-colors duration-300 ${
                     active === id ? "text-rose" : "text-ink hover:text-rose"
