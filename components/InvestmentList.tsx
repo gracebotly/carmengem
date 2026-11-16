@@ -28,7 +28,7 @@ export default function InvestmentList() {
           </p>
           <p>
             If you’d like to extend our session, and my schedule allows for it,
-            in-date extensions are $600 per hour.
+            in-date extensions are $300 per hour.
           </p>
           <p>
             I welcome all suitors who are polite and kind. I will never

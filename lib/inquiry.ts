@@ -1,6 +1,6 @@
 import { isEmailValid, isPhoneValid } from "@/lib/leadCapture";
 
-export const DURATION_OPTIONS = ["1 hour", "90 minutes", "2 hours", "3 hours", "4 hours", "6 hours", "14 hours"];
+export const DURATION_OPTIONS = ["1 hour", "90 minutes", "2 hours", "3 hours", "4 hours", "14 hours"];
 export const VIRTUAL_DURATIONS = ["15 minutes", "30 minutes", "60 minutes"];
 export const VIRTUAL_FORMATS = ["Video Call", "Voice Call", "Private Chat"];
 export const SCREENING_OPTIONS = [
