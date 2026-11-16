@@ -38,8 +38,8 @@ test('virtual validates without screening and filters hidden in-person fields', 
   for (const key of ['screeningMethod', 'screeningValue', 'cityState']) assert.equal(key in payload, false);
 });
 
-test('all seven exact in-person durations and all screening methods validate independently', () => {
-  assert.deepEqual(DURATION_OPTIONS, ['1 hour', '90 minutes', '2 hours', '3 hours', '4 hours', '6 hours', '14 hours']);
+test('all six exact in-person durations and all screening methods validate independently', () => {
+  assert.deepEqual(DURATION_OPTIONS, ['1 hour', '90 minutes', '2 hours', '3 hours', '4 hours', '14 hours']);
   for (const length of DURATION_OPTIONS) assert.deepEqual(validateInquiry({ ...inPerson, length }), {});
   for (const { value } of SCREENING_OPTIONS) {
     const screeningValue = value === 'professional-email' ? 'name@company.com' : 'https://example.com/profile';
@@ -55,6 +55,7 @@ test('rejects missing choices, wrong durations, past/impossible dates, and inval
   assert.ok(validateInquiry({ ...virtual, experience: '' }).experience);
   assert.ok(validateInquiry({ ...virtual, length: '1 hour' }).length);
   assert.ok(validateInquiry({ ...inPerson, length: 'Inquire' }).length);
+  assert.ok(validateInquiry({ ...inPerson, length: '6 hours' }).length);
   assert.ok(validateInquiry({ ...virtual, virtualFormat: '' }).virtualFormat);
   assert.ok(validateInquiry({ ...virtual, preferredTime: '25:00' }).preferredTime);
   assert.ok(validateInquiry({ ...inPerson, screeningMethod: '' }).screeningMethod);
