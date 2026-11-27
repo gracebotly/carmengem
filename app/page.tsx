@@ -15,6 +15,20 @@ export default function Home() {
         Carmen Gem — Washington DC Luxury Escort &amp; High-End Companion
       </h1>
 
+      <aside
+        aria-label="Tour announcement"
+        className="border-b border-line/60 bg-rose/10"
+      >
+        <p className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-1 px-6 py-3 text-center sm:flex-row sm:items-baseline sm:gap-4">
+          <span className="font-display text-2xl leading-tight text-ink">
+            Dubai Tour
+          </span>
+          <span className="text-sm text-stone">
+            <time dateTime="2026-12-03">December 3</time>–<time dateTime="2026-12-10">10, 2026</time>
+          </span>
+        </p>
+      </aside>
+
       <Section
         id="about"
         title="About"
